@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath, URL } from "node:url";
 import {
   createGeneration,
+  deleteGeneration,
   getGeneration,
   listGenerations,
   resetGenerationForRetry,
@@ -19,7 +20,7 @@ const MAX_BODY_BYTES = 1024 * 1024;
 const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
@@ -37,6 +38,7 @@ function sendIndexHtml(res) {
     const html = fs.readFileSync(indexPath);
     res.writeHead(200, {
       "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
       ...CORS_HEADERS,
     });
     res.end(html);
@@ -162,6 +164,16 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         sendJson(res, 200, generation);
+        return;
+      }
+
+      if (req.method === "DELETE") {
+        const deleted = deleteGeneration(parts[2]);
+        if (!deleted) {
+          sendJson(res, 404, { error: "not found" });
+          return;
+        }
+        sendJson(res, 200, { success: true });
         return;
       }
     }

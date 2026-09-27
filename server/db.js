@@ -51,6 +51,10 @@ const resetForRetry = db.prepare(`
   SET html = NULL, status = 'pending', error = NULL, completed_at = NULL
   WHERE id = ?
 `);
+const deleteById = db.prepare(`
+  DELETE FROM generations
+  WHERE id = ?
+`);
 
 export function createGeneration({ id, prompt, parentId = null }) {
   insertGeneration.run(id, prompt, parentId, new Date().toISOString());
@@ -78,4 +82,9 @@ export function updateGenerationFailed(id, error) {
 export function resetGenerationForRetry(id) {
   resetForRetry.run(id);
   return getGeneration(id);
+}
+
+export function deleteGeneration(id) {
+  const result = deleteById.run(id);
+  return result.changes > 0;
 }
