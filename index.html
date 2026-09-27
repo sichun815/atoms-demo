@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>Atoms Lite</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    :root { font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif; color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #020617; color: #f1f5f9; }
+    button, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .48; }
+    button:focus-visible, textarea:focus-visible { outline: 2px solid #67a7ff; outline-offset: 2px; }
+    ::selection { background: #2a5da2; color: #fff; }
+    .app-shell { height: 100vh; min-height: 540px; display: flex; flex-direction: column; background: #020617; color: #f1f5f9; }
+    .workspace { height: calc(100vh - 56px); min-height: 0; display: flex; background: #020617; }
+    .prompt-pane { width: 340px; flex: 0 0 340px; min-width: 0; border-right: 1px solid #1e293b; background: #0f172a; display: flex; flex-direction: column; }
+    .preview-pane { min-width: 0; flex: 1 1 0; display: flex; flex-direction: column; border-right: 1px solid #1e293b; background: #020617; }
+    .code-pane { width: 420px; flex: 0 0 420px; min-width: 0; background: #020617; display: flex; flex-direction: column; }
+    .pane-head { height: 56px; flex: 0 0 56px; border-bottom: 1px solid #1e293b; }
+    .preview-surface { min-height: 0; flex: 1; padding: 16px; display: flex; overflow: auto; }
+    .preview-frame { width: 100%; height: 100%; border: 1px solid #1e293b; border-radius: 4px; background: #fff; }
+    .code-scroll { min-height: 0; flex: 1; overflow: auto; }
+    .code-scroll pre { width: max-content; min-width: 100%; tab-size: 2; }
+    .thin-scroll::-webkit-scrollbar { width: 9px; height: 9px; }
+    .thin-scroll::-webkit-scrollbar-thumb { background: #334155; border: 2px solid transparent; border-radius: 9px; background-clip: padding-box; }
+    .thin-scroll::-webkit-scrollbar-track { background: transparent; }
+    .spinner { width: 24px; height: 24px; border: 2px solid #1e293b; border-top-color: #60a5fa; border-radius: 50%; animation: spin .85s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 1180px) {
+      .prompt-pane { width: 300px; flex-basis: 300px; }
+      .code-pane { width: 360px; flex-basis: 360px; }
+      .preview-surface { padding: 12px; }
+    }
+    @media (max-width: 880px) {
+      .app-shell { min-height: 100vh; height: auto; }
+      .workspace { display: block; }
+      .prompt-pane, .code-pane { width: 100%; border-left: 0; border-right: 0; }
+      .prompt-pane { border-bottom: 1px solid #1e293b; }
+      .preview-pane { height: min(75vh, 680px); min-height: 420px; }
+      .code-pane { height: 360px; border-top: 1px solid #1e293b; }
+      .preview-surface { padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const API_BASE = "http://localhost:3002";
+    const MODEL_NAME = "kimi-k2.6";
+    const { useState, useEffect, useRef } = React;
+
+    async function api(path, options = {}) {
+      let response;
+      try {
+        response = await fetch(`${API_BASE}${path}`, {
+          ...options,
+          headers: { "Content-Type": "application/json", ...options.headers },
+        });
+      } catch {
+        throw new Error("网络错误，请确认后端服务运行在 3002 端口");
+      }
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || `请求失败 (${response.status})`);
+      return data;
+    }
+
+    function relativeTime(value) {
+      if (!value) return "";
+      const seconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
+      if (!Number.isFinite(seconds)) return "";
+      if (seconds < 60) return "刚刚";
+      if (seconds < 3600) return `${Math.floor(seconds / 60)} 分钟前`;
+      if (seconds < 86400) return `${Math.floor(seconds / 3600)} 小时前`;
+      if (seconds < 604800) return `${Math.floor(seconds / 86400)} 天前`;
+      return new Date(value).toLocaleDateString("zh-CN");
+    }
+
+    function fullTime(value) {
+      return value ? new Date(value).toLocaleString("zh-CN") : "—";
+    }
+
+    function StatusBadge({ status }) {
+      const styles = {
+        success: "bg-emerald-500/10 text-emerald-300 border-emerald-500/25",
+        pending: "bg-amber-500/10 text-amber-300 border-amber-500/25",
+        failed: "bg-red-500/10 text-red-300 border-red-500/25",
+      };
+      const labels = { success: "完成", pending: "生成中", failed: "失败" };
+      return <span className={`shrink-0 rounded border px-2 py-0.5 text-xs ${styles[status] || styles.pending}`}>{labels[status] || status}</span>;
+    }
+
+    function PromptPanel({ draft, setDraft, onGenerate, isGenerating, history, onSelect, currentId, historyError }) {
+      return (
+        <aside className="prompt-pane flex w-[340px] flex-shrink-0 flex-col border-r border-slate-700">
+          <div className="pane-head flex items-center px-5">
+            <h2 className="text-sm font-semibold text-slate-100">创建应用</h2>
+          </div>
+          <form className="border-b border-slate-800 p-5" onSubmit={(event) => { event.preventDefault(); onGenerate(draft); }}>
+            <label htmlFor="prompt" className="mb-3 block text-xs font-medium text-slate-400">需求描述</label>
+            <textarea
+              id="prompt"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="描述你想要的应用，例如：做一个扫雷游戏，支持难度选择和重新开始"
+              className="h-32 w-full resize-none rounded border border-slate-700 bg-slate-900 p-3 text-sm leading-6 text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              maxLength={2000}
+              disabled={isGenerating}
+            />
+            <button type="submit" disabled={isGenerating || !draft.trim()} className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-blue-600">
+              {isGenerating && <span className="spinner !h-4 !w-4 !border-white/40 !border-t-white" />}
+              {isGenerating ? "生成中..." : "生成"}
+            </button>
+          </form>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="flex items-center justify-between px-5 pb-3 pt-5">
+              <h2 className="text-xs font-semibold uppercase text-slate-400">最近生成</h2>
+              <span className="text-xs text-slate-500">{Math.min(history.length, 5)} / 5</span>
+            </div>
+            <div className="thin-scroll min-h-0 flex-1 overflow-y-auto px-3 pb-4">
+              {historyError && <p className="px-2 py-3 text-xs text-red-300">{historyError}</p>}
+              {!historyError && history.length === 0 && <p className="px-2 py-3 text-sm text-slate-400">暂无记录</p>}
+              {history.slice(0, 5).map((item) => (
+                <button key={item.id} type="button" onClick={() => onSelect(item.id)}
+                  className={`mb-1 w-full rounded border px-3 py-3 text-left transition hover:bg-slate-800 ${currentId === item.id ? "border-blue-500/60 bg-blue-600/10" : "border-transparent"}`}>
+                  <span className="block truncate text-sm text-slate-100">{item.prompt.slice(0, 40)}</span>
+                  <span className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-400">
+                    <span>{relativeTime(item.created_at)}</span>
+                    <StatusBadge status={item.status} />
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </aside>
+      );
+    }
+
+    function IconButton({ title, disabled, onClick, children }) {
+      return (
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={disabled}
+          title={title}
+          aria-label={title}
+          className="inline-flex h-8 w-8 items-center justify-center rounded text-slate-400 transition hover:bg-slate-800 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+        >
+          {children}
+        </button>
+      );
+    }
+
+    function PreviewPanel({ generation, isGenerating, onModify, onRetry, displayError }) {
+      const [reloadKey, setReloadKey] = useState(0);
+      const surfaceRef = useRef(null);
+      const ready = generation?.status === "success" && generation.html;
+      const pending = isGenerating || generation?.status === "pending";
+      const title = generation?.prompt?.trim().slice(0, 20) || "生成的应用";
+
+      return (
+        <section className="preview-pane flex flex-1 min-w-0 flex-col border-r border-slate-700" aria-label="应用预览">
+          <div className="pane-head flex items-center justify-between gap-3 px-4">
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium text-slate-500">预览</p>
+              <h2 className="truncate text-sm font-semibold text-slate-100" title={generation?.prompt || title}>{title}</h2>
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              <IconButton title="修改需求" onClick={onModify} disabled={!ready}>
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+              </IconButton>
+              <IconButton title="重新加载" onClick={() => setReloadKey((value) => value + 1)} disabled={!ready}>
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15.6 6.1" /><path d="M3 12A9 9 0 0 1 18.6 5.9" /><path d="M3 4v6h6" /><path d="M21 20v-6h-6" /></svg>
+              </IconButton>
+              <IconButton title="全屏" onClick={() => surfaceRef.current?.requestFullscreen?.()} disabled={!ready}>
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" /><path d="M3 16v3a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" /></svg>
+              </IconButton>
+            </div>
+          </div>
+          <div className="preview-surface" ref={surfaceRef}>
+            {ready && !pending ? (
+              <iframe key={`${generation.id}-${reloadKey}`} title="生成的应用" sandbox="allow-scripts allow-forms allow-modals" srcDoc={generation.html} className="preview-frame w-full h-full bg-white" />
+            ) : (
+              <div className="flex min-h-full w-full items-center justify-center rounded border border-slate-800 bg-slate-950 p-6 text-center">
+                {pending ? (
+                  <div className="flex flex-col items-center gap-4"><span className="spinner" /><p className="text-sm text-slate-100">AI 正在生成...</p></div>
+                ) : displayError || generation?.status === "failed" ? (
+                  <div className="max-w-md">
+                    <h3 className="text-sm font-semibold text-red-300">生成失败</h3>
+                    <p className="mt-2 break-words text-sm leading-6 text-slate-400">{displayError || generation.error || "未知错误"}</p>
+                    {generation?.id && <button type="button" onClick={onRetry} className="mt-5 rounded border border-slate-700 px-4 py-2 text-sm text-slate-100 transition hover:bg-slate-800">重试</button>}
+                  </div>
+                ) : (
+                  <div className="max-w-sm text-slate-400">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded border border-slate-700 bg-slate-900 text-2xl" aria-hidden="true">🎨</div>
+                    <p className="text-sm font-medium text-slate-100">在左侧输入你的需求，点击生成</p>
+                    <p className="mt-2 text-xs leading-5 text-slate-400">生成的网页应用会在这里实时预览</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="flex min-h-9 flex-wrap items-center gap-x-4 gap-y-1 border-t border-slate-800 px-4 py-2 text-[11px] text-slate-400">
+            <span>创建于 {fullTime(generation?.created_at)}</span>
+            <span>模型 {generation?.model || MODEL_NAME}</span>
+            {generation?.usage && <span>Token {generation.usage.total_tokens ?? ((generation.usage.input_tokens || 0) + (generation.usage.output_tokens || 0))}</span>}
+            {generation && <StatusBadge status={pending ? "pending" : generation.status} />}
+          </div>
+        </section>
+      );
+    }
+
+    function CodePanel({ generation }) {
+      const [copied, setCopied] = useState(false);
+      useEffect(() => setCopied(false), [generation?.id, generation?.html]);
+      async function copyCode() {
+        try {
+          await navigator.clipboard.writeText(generation.html);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1800);
+        } catch {
+          setCopied(false);
+        }
+      }
+      return (
+        <aside className="code-pane flex w-[420px] flex-shrink-0 flex-col" aria-label="生成代码">
+          <div className="pane-head flex items-center justify-between px-4">
+            <div><h2 className="text-sm font-semibold text-slate-100">代码</h2><p className="text-[11px] text-slate-400">index.html</p></div>
+            <button type="button" onClick={copyCode} disabled={!generation?.html} className="rounded border border-slate-700 px-3 py-1.5 text-xs text-slate-300 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent">{copied ? "已复制" : "复制"}</button>
+          </div>
+          <div className="code-scroll thin-scroll bg-slate-950">
+            {generation?.html ? <pre className="p-4 font-mono text-xs leading-5 text-slate-300"><code>{generation.html}</code></pre> : <div className="flex h-full min-h-[220px] items-center justify-center p-6 text-center text-sm text-slate-400">生成的 HTML 代码会显示在这里</div>}
+          </div>
+          <div className="border-t border-slate-800 px-4 py-2 text-[11px] text-slate-400">{generation?.html ? `${generation.html.length.toLocaleString()} 字符` : "HTML"}</div>
+        </aside>
+      );
+    }
+
+    function History({ history, onSelect, error, onRefresh }) {
+      return (
+        <main className="thin-scroll min-h-0 flex-1 overflow-y-auto bg-slate-950">
+          <div className="mx-auto max-w-5xl px-6 py-8">
+            <div className="mb-6 flex items-center justify-between gap-3">
+              <div><h1 className="text-xl font-semibold text-slate-100">历史记录</h1><p className="mt-1 text-xs text-slate-400">{history.length} 条记录</p></div>
+              <button type="button" onClick={onRefresh} className="rounded border border-slate-700 px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800">刷新</button>
+            </div>
+            {error && <p className="mb-4 text-sm text-red-300">{error}</p>}
+            {!error && history.length === 0 && <p className="border-t border-slate-800 py-8 text-sm text-slate-400">暂无生成记录</p>}
+            <div className="border-t border-slate-800">
+              {history.map((item) => (
+                <button key={item.id} type="button" onClick={() => onSelect(item.id)} className="flex w-full flex-wrap items-start justify-between gap-4 border-b border-slate-800 px-2 py-5 text-left transition hover:bg-slate-900">
+                  <span className="min-w-0 flex-1 whitespace-pre-wrap break-words text-sm leading-6 text-slate-100">{item.prompt}</span>
+                  <span className="flex shrink-0 items-center gap-4"><time className="text-xs text-slate-400">{fullTime(item.created_at)}</time><StatusBadge status={item.status} /></span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </main>
+      );
+    }
+
+    function ModifyDialog({ onClose, onSubmit, isGenerating }) {
+      const [text, setText] = useState("");
+      useEffect(() => {
+        const onKeyDown = (event) => { if (event.key === "Escape" && !isGenerating) onClose(); };
+        document.addEventListener("keydown", onKeyDown);
+        return () => document.removeEventListener("keydown", onKeyDown);
+      }, [onClose, isGenerating]);
+      return (
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/70 p-4" onMouseDown={(event) => { if (event.target === event.currentTarget && !isGenerating) onClose(); }}>
+          <form role="dialog" aria-modal="true" aria-labelledby="modify-title" onSubmit={(event) => { event.preventDefault(); if (text.trim()) onSubmit(text.trim()); }} className="w-full max-w-lg rounded border border-slate-700 bg-slate-900 p-5 shadow-2xl">
+            <h2 id="modify-title" className="text-base font-semibold text-slate-100">修改需求</h2>
+            <textarea autoFocus value={text} onChange={(event) => setText(event.target.value)} maxLength={2000} placeholder="例如：把扫雷的格子调大一点" className="mt-4 h-32 w-full resize-none rounded border border-slate-700 bg-slate-950 p-3 text-sm leading-6 text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500" />
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" onClick={onClose} disabled={isGenerating} className="rounded px-4 py-2 text-sm text-slate-300 transition hover:bg-slate-800">取消</button>
+              <button type="submit" disabled={!text.trim() || isGenerating} className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50">生成新版本</button>
+            </div>
+          </form>
+        </div>
+      );
+    }
+
+    function App() {
+      const [currentView, setCurrentView] = useState("workspace");
+      const [currentGeneration, setCurrentGeneration] = useState(null);
+      const [isGenerating, setIsGenerating] = useState(false);
+      const [history, setHistory] = useState([]);
+      const [historyError, setHistoryError] = useState("");
+      const [displayError, setDisplayError] = useState("");
+      const [draft, setDraft] = useState("");
+      const [modifyOpen, setModifyOpen] = useState(false);
+      const operationRef = useRef(0);
+
+      async function refreshHistory() {
+        try {
+          const records = await api("/api/generations");
+          setHistory(records);
+          setHistoryError("");
+        } catch (error) {
+          setHistoryError(error.message);
+        }
+      }
+
+      useEffect(() => { refreshHistory(); }, []);
+      useEffect(() => { if (currentView === "history") refreshHistory(); }, [currentView]);
+      useEffect(() => () => { operationRef.current += 1; }, []);
+
+      async function pollGeneration(id, operation) {
+        for (let attempt = 0; attempt < 30; attempt += 1) {
+          if (operationRef.current !== operation) return;
+          try {
+            const record = await api(`/api/generations/${encodeURIComponent(id)}`);
+            if (operationRef.current !== operation) return;
+            setCurrentGeneration(record);
+            if (record.status !== "pending") {
+              setIsGenerating(false);
+              refreshHistory();
+              return;
+            }
+          } catch (error) {
+            if (operationRef.current !== operation) return;
+            setDisplayError(error.message);
+            setIsGenerating(false);
+            return;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+        if (operationRef.current === operation) {
+          setDisplayError("生成超时");
+          setIsGenerating(false);
+          refreshHistory();
+        }
+      }
+
+      async function submitGeneration(prompt, parentId = null) {
+        if (!prompt?.trim() || isGenerating) return;
+        const operation = ++operationRef.current;
+        setIsGenerating(true);
+        setDisplayError("");
+        setCurrentView("workspace");
+        setModifyOpen(false);
+        try {
+          const data = await api("/api/generations", {
+            method: "POST",
+            body: JSON.stringify({ prompt: prompt.trim(), ...(parentId ? { parentId } : {}) }),
+          });
+          if (operationRef.current !== operation) return;
+          setCurrentGeneration({ id: data.id, prompt: prompt.trim(), html: null, status: "pending", error: null, created_at: new Date().toISOString(), parent_id: parentId });
+          refreshHistory();
+          pollGeneration(data.id, operation);
+        } catch (error) {
+          if (operationRef.current !== operation) return;
+          setDisplayError(error.message);
+          setIsGenerating(false);
+        }
+      }
+
+      async function selectGeneration(id) {
+        const operation = ++operationRef.current;
+        setCurrentView("workspace");
+        setDisplayError("");
+        setIsGenerating(false);
+        try {
+          const record = await api(`/api/generations/${encodeURIComponent(id)}`);
+          if (operationRef.current !== operation) return;
+          setCurrentGeneration(record);
+          if (record.status === "pending") {
+            setIsGenerating(true);
+            pollGeneration(id, operation);
+          }
+        } catch (error) {
+          if (operationRef.current === operation) {
+            setCurrentGeneration(null);
+            setDisplayError(error.message);
+          }
+        }
+      }
+
+      async function retryGeneration() {
+        if (!currentGeneration?.id || isGenerating) return;
+        const id = currentGeneration.id;
+        const operation = ++operationRef.current;
+        setDisplayError("");
+        setIsGenerating(true);
+        try {
+          await api(`/api/generations/${encodeURIComponent(id)}/retry`, { method: "POST" });
+          if (operationRef.current !== operation) return;
+          setCurrentGeneration((record) => ({ ...record, html: null, status: "pending", error: null }));
+          refreshHistory();
+          pollGeneration(id, operation);
+        } catch (error) {
+          if (operationRef.current !== operation) return;
+          setDisplayError(error.message);
+          setIsGenerating(false);
+        }
+      }
+
+      return (
+        <div className="app-shell">
+          <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-800 bg-slate-950 px-4 sm:px-6">
+            <div className="flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded bg-blue-600 text-sm font-bold text-white">A</span>
+              <div>
+                <div className="text-sm font-semibold leading-4 text-slate-100">Atoms Lite</div>
+                <div className="text-[11px] leading-4 text-slate-400">用自然语言生成可运行的应用</div>
+              </div>
+            </div>
+            <nav className="flex items-center gap-1" aria-label="主导航">
+              <button type="button" onClick={() => setCurrentView("workspace")} className={`rounded px-3 py-1.5 text-sm transition ${currentView === "workspace" ? "bg-slate-800 text-white" : "text-slate-400 hover:bg-slate-800 hover:text-white"}`}>Workspace</button>
+              <button type="button" onClick={() => setCurrentView("history")} className={`rounded px-3 py-1.5 text-sm transition ${currentView === "history" ? "bg-slate-800 text-white" : "text-slate-400 hover:bg-slate-800 hover:text-white"}`}>History</button>
+            </nav>
+          </header>
+          {currentView === "workspace" ? (
+            <main className="workspace flex h-[calc(100vh-56px)] bg-slate-950 text-slate-100">
+              <PromptPanel draft={draft} setDraft={setDraft} onGenerate={submitGeneration} isGenerating={isGenerating} history={history} onSelect={selectGeneration} currentId={currentGeneration?.id} historyError={historyError} />
+              <PreviewPanel generation={currentGeneration} isGenerating={isGenerating} onModify={() => setModifyOpen(true)} onRetry={retryGeneration} displayError={displayError} />
+              <CodePanel generation={currentGeneration} />
+            </main>
+          ) : <History history={history} onSelect={selectGeneration} error={historyError} onRefresh={refreshHistory} />}
+          {modifyOpen && <ModifyDialog onClose={() => setModifyOpen(false)} onSubmit={(text) => submitGeneration(text, currentGeneration.id)} isGenerating={isGenerating} />}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
