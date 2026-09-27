@@ -86,11 +86,11 @@ function startGeneration(id, prompt, originalHtml = null) {
     try {
       const { html } = await generateHtml(prompt, originalHtml);
       validateHtml(html);
-      updateGenerationSuccess(id, html);
+      await updateGenerationSuccess(id, html);
     } catch (error) {
       console.error(`Generation ${id} failed:`, error);
       try {
-        updateGenerationFailed(id, error.message || "Generation failed");
+        await updateGenerationFailed(id, error.message || "Generation failed");
       } catch (dbError) {
         console.error(`Could not mark generation ${id} as failed:`, dbError);
       }
@@ -98,11 +98,11 @@ function startGeneration(id, prompt, originalHtml = null) {
   });
 }
 
-function getParentHtml(parentId) {
+async function getParentHtml(parentId) {
   if (typeof parentId !== "string" || !parentId) {
     throw Object.assign(new Error("parentId must be a valid ID"), { statusCode: 400 });
   }
-  const parent = getGeneration(parentId);
+  const parent = await getGeneration(parentId);
   if (!parent) {
     throw Object.assign(new Error("Parent generation not found"), { statusCode: 404 });
   }
@@ -143,22 +143,22 @@ const server = http.createServer(async (req, res) => {
       }
 
       const parentId = body.parentId ?? null;
-      const originalHtml = parentId === null ? null : getParentHtml(parentId);
+      const originalHtml = parentId === null ? null : await getParentHtml(parentId);
       const id = randomUUID();
-      createGeneration({ id, prompt: prompt.trim(), parentId });
+      await createGeneration({ id, prompt: prompt.trim(), parentId });
       sendJson(res, 202, { id, status: "pending" });
       startGeneration(id, prompt.trim(), originalHtml);
       return;
     }
 
     if (req.method === "GET" && pathname === "/api/generations") {
-      sendJson(res, 200, listGenerations());
+      sendJson(res, 200, await listGenerations());
       return;
     }
 
     if (parts[0] === "api" && parts[1] === "generations" && parts.length === 3) {
       if (req.method === "GET") {
-        const generation = getGeneration(parts[2]);
+        const generation = await getGeneration(parts[2]);
         if (!generation) {
           sendJson(res, 404, { error: "not found" });
           return;
@@ -168,7 +168,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (req.method === "DELETE") {
-        const deleted = deleteGeneration(parts[2]);
+        const deleted = await deleteGeneration(parts[2]);
         if (!deleted) {
           sendJson(res, 404, { error: "not found" });
           return;
@@ -185,7 +185,7 @@ const server = http.createServer(async (req, res) => {
       parts.length === 4 &&
       parts[3] === "retry"
     ) {
-      const generation = getGeneration(parts[2]);
+      const generation = await getGeneration(parts[2]);
       if (!generation) {
         sendJson(res, 404, { error: "not found" });
         return;
@@ -196,9 +196,9 @@ const server = http.createServer(async (req, res) => {
       }
 
       const originalHtml = generation.parent_id
-        ? getParentHtml(generation.parent_id)
+        ? await getParentHtml(generation.parent_id)
         : null;
-      resetGenerationForRetry(generation.id);
+      await resetGenerationForRetry(generation.id);
       sendJson(res, 202, { id: generation.id, status: "pending" });
       startGeneration(generation.id, generation.prompt, originalHtml);
       return;

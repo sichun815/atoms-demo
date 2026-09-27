@@ -1,90 +1,78 @@
-import { DatabaseSync } from "node:sqlite";
-import fs from "node:fs";
-import path from "node:path";
+import pg from "pg";
 
-const dbPath = process.env.DATABASE_PATH || "./data/atoms.db";
-fs.mkdirSync(path.dirname(dbPath), { recursive: true });
-
-const db = new DatabaseSync(dbPath);
-
-db.exec(`
-  CREATE TABLE IF NOT EXISTS generations (
-    id TEXT PRIMARY KEY,
-    prompt TEXT NOT NULL,
-    html TEXT,
-    status TEXT NOT NULL DEFAULT 'pending',
-    error TEXT,
-    parent_id TEXT,
-    created_at TEXT NOT NULL,
-    completed_at TEXT
-  )
-`);
-
-const insertGeneration = db.prepare(`
-  INSERT INTO generations (
-    id, prompt, html, status, error, parent_id, created_at, completed_at
-  ) VALUES (?, ?, NULL, 'pending', NULL, ?, ?, NULL)
-`);
-const selectGeneration = db.prepare(`
-  SELECT id, prompt, html, status, error, parent_id, created_at, completed_at
-  FROM generations
-  WHERE id = ?
-`);
-const selectGenerations = db.prepare(`
-  SELECT id, prompt, html, status, error, parent_id, created_at, completed_at
-  FROM generations
-  ORDER BY created_at DESC
-  LIMIT ?
-`);
-const markSuccess = db.prepare(`
-  UPDATE generations
-  SET html = ?, status = 'success', error = NULL, completed_at = ?
-  WHERE id = ?
-`);
-const markFailed = db.prepare(`
-  UPDATE generations
-  SET status = 'failed', error = ?, completed_at = ?
-  WHERE id = ?
-`);
-const resetForRetry = db.prepare(`
-  UPDATE generations
-  SET html = NULL, status = 'pending', error = NULL, completed_at = NULL
-  WHERE id = ?
-`);
-const deleteById = db.prepare(`
-  DELETE FROM generations
-  WHERE id = ?
-`);
-
-export function createGeneration({ id, prompt, parentId = null }) {
-  insertGeneration.run(id, prompt, parentId, new Date().toISOString());
-  return getGeneration(id);
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL is not set");
 }
 
-export function getGeneration(id) {
-  return selectGeneration.get(id) ?? null;
+const { Pool } = pg;
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+
+const columns = "id, prompt, html, status, error, parent_id, created_at, completed_at";
+
+export async function createGeneration({ id, prompt, parentId = null }) {
+  const result = await pool.query(
+    `INSERT INTO generations (
+      id, prompt, html, status, error, parent_id, created_at, completed_at
+    ) VALUES ($1, $2, NULL, 'pending', NULL, $3, $4, NULL)
+    RETURNING ${columns}`,
+    [id, prompt, parentId, new Date().toISOString()],
+  );
+  return result.rows[0];
 }
 
-export function listGenerations(limit = 50) {
-  return selectGenerations.all(Math.max(1, Math.min(Number(limit) || 50, 100)));
+export async function getGeneration(id) {
+  const result = await pool.query(
+    `SELECT ${columns} FROM generations WHERE id = $1`,
+    [id],
+  );
+  return result.rows[0] ?? null;
 }
 
-export function updateGenerationSuccess(id, html) {
-  markSuccess.run(html, new Date().toISOString(), id);
-  return getGeneration(id);
+export async function listGenerations(limit = 50) {
+  const result = await pool.query(
+    `SELECT ${columns} FROM generations ORDER BY created_at DESC LIMIT $1`,
+    [Math.max(1, Math.min(Number(limit) || 50, 100))],
+  );
+  return result.rows;
 }
 
-export function updateGenerationFailed(id, error) {
-  markFailed.run(error, new Date().toISOString(), id);
-  return getGeneration(id);
+export async function updateGenerationSuccess(id, html) {
+  const result = await pool.query(
+    `UPDATE generations
+     SET html = $1, status = 'success', error = NULL, completed_at = $2
+     WHERE id = $3
+     RETURNING ${columns}`,
+    [html, new Date().toISOString(), id],
+  );
+  return result.rows[0] ?? null;
 }
 
-export function resetGenerationForRetry(id) {
-  resetForRetry.run(id);
-  return getGeneration(id);
+export async function updateGenerationFailed(id, error) {
+  const result = await pool.query(
+    `UPDATE generations
+     SET status = 'failed', error = $1, completed_at = $2
+     WHERE id = $3
+     RETURNING ${columns}`,
+    [error, new Date().toISOString(), id],
+  );
+  return result.rows[0] ?? null;
 }
 
-export function deleteGeneration(id) {
-  const result = deleteById.run(id);
-  return result.changes > 0;
+export async function resetGenerationForRetry(id) {
+  const result = await pool.query(
+    `UPDATE generations
+     SET html = NULL, status = 'pending', error = NULL, completed_at = NULL
+     WHERE id = $1
+     RETURNING ${columns}`,
+    [id],
+  );
+  return result.rows[0] ?? null;
+}
+
+export async function deleteGeneration(id) {
+  const result = await pool.query("DELETE FROM generations WHERE id = $1", [id]);
+  return result.rowCount > 0;
 }
