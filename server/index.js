@@ -1,6 +1,8 @@
 import http from "node:http";
 import { randomUUID } from "node:crypto";
-import { URL } from "node:url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath, URL } from "node:url";
 import {
   createGeneration,
   getGeneration,
@@ -12,8 +14,9 @@ import {
 import { generateHtml } from "./llm.js";
 import { validateHtml } from "./validate.js";
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 const MAX_BODY_BYTES = 1024 * 1024;
+const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -26,6 +29,24 @@ function sendJson(res, statusCode, data) {
     ...CORS_HEADERS,
   });
   res.end(JSON.stringify(data));
+}
+
+function sendIndexHtml(res) {
+  const indexPath = path.join(PROJECT_ROOT, "index.html");
+  try {
+    const html = fs.readFileSync(indexPath);
+    res.writeHead(200, {
+      "Content-Type": "text/html; charset=utf-8",
+      ...CORS_HEADERS,
+    });
+    res.end(html);
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      sendJson(res, 404, { error: "index.html not found" });
+      return;
+    }
+    throw error;
+  }
 }
 
 function readBody(req) {
@@ -101,6 +122,11 @@ const server = http.createServer(async (req, res) => {
     const pathname = url.pathname;
     const parts = pathname.split("/").filter(Boolean);
 
+    if (req.method === "GET" && (pathname === "/" || pathname === "/index.html")) {
+      sendIndexHtml(res);
+      return;
+    }
+
     if (req.method === "GET" && pathname === "/api/health") {
       sendJson(res, 200, { status: "ok" });
       return;
@@ -175,6 +201,6 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server listening on port ${PORT}`);
 });

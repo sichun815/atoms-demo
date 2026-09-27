@@ -2,6 +2,7 @@
   "name": "atoms-demo",
   "type": "module",
   "scripts": {
-    "dev": "node --env-file=.env server/index.js"
+    "dev": "node --env-file=.env server/index.js",
+    "start": "node server/index.js"
   }
 }

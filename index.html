@@ -52,7 +52,9 @@
 <body>
   <div id="root"></div>
   <script type="text/babel">
-    const API_BASE = "http://localhost:3002";
+    const API_BASE = (location.hostname === "localhost" || location.protocol === "file:")
+      ? "http://localhost:3002"
+      : window.location.origin;
     const MODEL_NAME = "kimi-k2.6";
     const { useState, useEffect, useRef } = React;
 
