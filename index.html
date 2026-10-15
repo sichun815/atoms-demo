@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark" />
-  <title>Atoms Lite</title>
+  <title>Atoms Demo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -92,6 +92,107 @@
     }
     .icon-button:disabled:hover::after { display: none; }
     .code-font { font-family: ui-monospace, "SF Mono", Consolas, monospace; }
+    /* ---- Landing (hero) ---- */
+    .landing {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px 64px;
+      background:
+        radial-gradient(ellipse 60% 42% at 50% 26%, rgba(124, 92, 250, .16), transparent 70%),
+        radial-gradient(ellipse 40% 30% at 50% 60%, rgba(124, 92, 250, .06), transparent 70%),
+        var(--bg);
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid rgba(139, 92, 246, .45);
+      border-radius: 999px;
+      background: rgba(139, 92, 246, .08);
+      padding: 5px 14px;
+      font-size: 12px;
+      color: #c4b5fd;
+    }
+    .hero-badge::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: #a78bfa; box-shadow: 0 0 8px rgba(167, 139, 250, .9); }
+    .hero-title { margin: 26px 0 0; font-size: clamp(38px, 6vw, 58px); line-height: 1.15; font-weight: 800; letter-spacing: .01em; color: #f5f4ff; text-align: center; }
+    .hero-title .grad {
+      background: linear-gradient(92deg, #a78bfa 0%, #7c5cfa 55%, #6d4ef0 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .hero-sub { margin: 22px 0 0; max-width: 560px; text-align: center; font-size: 14px; line-height: 1.9; color: var(--muted); }
+    .hero-card {
+      width: 100%;
+      max-width: 640px;
+      margin-top: 40px;
+      border: 1px solid rgba(139, 92, 246, .28);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(23, 20, 34, .92), rgba(16, 15, 22, .96));
+      box-shadow: 0 0 0 1px rgba(0,0,0,.2), 0 18px 50px rgba(0,0,0,.45), 0 0 42px rgba(124, 92, 250, .12);
+      padding: 16px 18px 14px;
+    }
+    .hero-card:focus-within { border-color: rgba(139, 92, 246, .6); box-shadow: 0 0 0 1px rgba(0,0,0,.2), 0 18px 50px rgba(0,0,0,.45), 0 0 60px rgba(124, 92, 250, .22); }
+    .hero-card-label { display: flex; align-items: center; gap: 8px; font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12px; color: #a78bfa; }
+    .hero-textarea {
+      width: 100%;
+      border: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      outline: none !important;
+      resize: none;
+      margin-top: 10px;
+      min-height: 96px;
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--text);
+    }
+    .hero-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .hero-hint { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 11px; color: var(--faint); }
+    .hero-send {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      border: 0;
+      background: #7c5cfa;
+      color: #fff;
+      transition: background-color 150ms, transform 150ms;
+    }
+    .hero-send:hover:not(:disabled) { background: #6d4ef0; transform: translateY(-1px); }
+    .hero-chip {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(20, 20, 20, .7);
+      padding: 8px 16px;
+      font-size: 12px;
+      color: var(--muted);
+      transition: border-color 150ms, color 150ms, background-color 150ms;
+      white-space: nowrap;
+    }
+    .hero-chip:hover { border-color: rgba(139, 92, 246, .55); background: rgba(139, 92, 246, .08); color: var(--text); }
+    .btn-primary-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 0;
+      border-radius: 999px;
+      background: #7c5cfa;
+      padding: 9px 18px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      transition: background-color 150ms;
+    }
+    .btn-primary-pill:hover { background: #6d4ef0; }
     @media (max-width: 880px) {
       .app-shell { min-height: 100vh; height: auto; }
       .workspace { display: block; }
@@ -161,6 +262,54 @@
           <path d="M10 11v6" />
           <path d="M14 11v6" />
         </svg>
+      );
+    }
+
+    function Landing({ draft, setDraft, onGenerate, isGenerating, onEnterWorkspace }) {
+      const IDEAS = [
+        "带分类和图表的个人记账本",
+        "番茄钟 + 待办清单",
+        "可玩的贪吃蛇小游戏",
+        "咖啡店落地页，含菜单和预约表单",
+      ];
+      function submit() {
+        if (draft.trim() && !isGenerating) onGenerate(draft);
+      }
+      return (
+        <main className="landing">
+          <span className="hero-badge">AI 代码引擎 · 已连通</span>
+          <h1 className="hero-title">把想法变成<span className="grad">可运行的应用</span></h1>
+          <p className="hero-sub">用一句话描述需求，AI 实时生成完整可运行的代码，对话即迭代，每个版本自动存档，<br />随时回滚与导出。</p>
+          <form
+            className="hero-card"
+            onSubmit={(event) => { event.preventDefault(); submit(); }}
+          >
+            <div className="hero-card-label"><span aria-hidden="true">&gt;</span><span>输入你的想法</span></div>
+            <textarea
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submit(); } }}
+              placeholder="描述你想要的应用，例如：一个支持分类统计的记账本，带月度饼图"
+              maxLength={2000}
+              disabled={isGenerating}
+              className="hero-textarea"
+            />
+            <div className="hero-foot">
+              <span className="hero-hint">Enter 发送 · Shift+Enter 换行</span>
+              <button type="submit" disabled={isGenerating || !draft.trim()} aria-label="发送" className="hero-send">
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 19V5" /><path d="m5 12 7-7 7 7" /></svg>
+              </button>
+            </div>
+          </form>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            {IDEAS.map((idea) => (
+              <button key={idea} type="button" className="hero-chip" onClick={() => setDraft(idea)}>{idea}</button>
+            ))}
+          </div>
+          <button type="button" onClick={onEnterWorkspace} className="mt-10 text-xs text-[#6b6b6b] transition-colors duration-150 hover:text-[#a1a1a1]">
+            直接进入 Workspace →
+          </button>
+        </main>
       );
     }
 
@@ -385,7 +534,7 @@
     }
 
     function App() {
-      const [currentView, setCurrentView] = useState("workspace");
+      const [currentView, setCurrentView] = useState("landing");
       const [currentGeneration, setCurrentGeneration] = useState(null);
       const [isGenerating, setIsGenerating] = useState(false);
       const [history, setHistory] = useState([]);
@@ -526,20 +675,26 @@
           <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#262626] bg-[#0a0a0a] px-4 sm:px-6">
             <div className="flex items-center gap-3">
               <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0" aria-hidden="true">
-                <rect x="1" y="1" width="30" height="30" rx="7" fill="none" stroke="none" />
-                <path d="M10.2 22 15 10h2l4.8 12h-2.1l-1.1-3h-5.2l-1.1 3h-2.1Zm4-4.8h3.7L16 12.2l-1.8 5Z" fill="#ededed" />
+                <rect x="1" y="1" width="30" height="30" rx="8" fill="#7c5cfa" />
+                <path d="M10.2 22 15 10h2l4.8 12h-2.1l-1.1-3h-5.2l-1.1 3h-2.1Zm4-4.8h3.7L16 12.2l-1.8 5Z" fill="#ffffff" />
               </svg>
-              <div>
-                <div className="text-sm font-semibold leading-4 text-[#ededed]">Atoms Lite</div>
-                <div className="text-[11px] leading-4 text-[#a1a1a1]">用自然语言生成可运行的应用</div>
-              </div>
+              <div className="text-sm font-bold leading-4 text-[#f5f4ff]">Atoms Demo</div>
             </div>
-            <nav className="flex items-center gap-1 rounded-full border border-[#262626] bg-[#141414] p-1" aria-label="主导航">
-              <button type="button" onClick={() => setCurrentView("workspace")} className={`rounded-full px-3 py-1.5 text-sm transition-colors duration-150 ${currentView === "workspace" ? "bg-[#262626] text-[#ededed]" : "text-[#a1a1a1] hover:bg-[#1a1a1a] hover:text-[#ededed]"}`}>Workspace</button>
-              <button type="button" onClick={() => setCurrentView("history")} className={`rounded-full px-3 py-1.5 text-sm transition-colors duration-150 ${currentView === "history" ? "bg-[#262626] text-[#ededed]" : "text-[#a1a1a1] hover:bg-[#1a1a1a] hover:text-[#ededed]"}`}>History</button>
-            </nav>
+            {currentView === "landing" ? (
+              <button type="button" onClick={() => setCurrentView("workspace")} className="btn-primary-pill">
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></svg>
+                登录开始创作
+              </button>
+            ) : (
+              <nav className="flex items-center gap-1 rounded-full border border-[#262626] bg-[#141414] p-1" aria-label="主导航">
+                <button type="button" onClick={() => setCurrentView("workspace")} className={`rounded-full px-3 py-1.5 text-sm transition-colors duration-150 ${currentView === "workspace" ? "bg-[#262626] text-[#ededed]" : "text-[#a1a1a1] hover:bg-[#1a1a1a] hover:text-[#ededed]"}`}>Workspace</button>
+                <button type="button" onClick={() => setCurrentView("history")} className={`rounded-full px-3 py-1.5 text-sm transition-colors duration-150 ${currentView === "history" ? "bg-[#262626] text-[#ededed]" : "text-[#a1a1a1] hover:bg-[#1a1a1a] hover:text-[#ededed]"}`}>History</button>
+              </nav>
+            )}
           </header>
-          {currentView === "workspace" ? (
+          {currentView === "landing" ? (
+            <Landing draft={draft} setDraft={setDraft} onGenerate={submitGeneration} isGenerating={isGenerating} onEnterWorkspace={() => setCurrentView("workspace")} />
+          ) : currentView === "workspace" ? (
             <main className="workspace flex h-[calc(100vh-56px)] bg-[#0a0a0a] text-[#ededed]">
               <PromptPanel draft={draft} setDraft={setDraft} onGenerate={submitGeneration} isGenerating={isGenerating} history={history} onSelect={selectGeneration} onDelete={deleteRecord} currentId={currentGeneration?.id} historyError={historyError} />
               <PreviewPanel generation={currentGeneration} isGenerating={isGenerating} onModify={() => setModifyOpen(true)} onRetry={retryGeneration} displayError={displayError} />
