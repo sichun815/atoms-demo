@@ -320,15 +320,16 @@
       );
     }
 
-    function Landing({ draft, setDraft, onGenerate, isGenerating, onEnterWorkspace }) {
+    function Landing({ draft, setDraft, onGenerate, isGenerating, busy, onEnterWorkspace }) {
       const IDEAS = [
         "带分类和图表的个人记账本",
         "番茄钟 + 待办清单",
         "可玩的贪吃蛇小游戏",
         "咖啡店落地页，含菜单和预约表单",
       ];
+      const locked = isGenerating || busy;
       function submit() {
-        if (draft.trim() && !isGenerating) onGenerate(draft);
+        if (draft.trim() && !locked) onGenerate(draft);
       }
       return (
         <main className="landing">
@@ -344,14 +345,14 @@
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submit(); } }}
-              placeholder="描述你想要的应用，例如：一个支持分类统计的记账本，带月度饼图"
+              placeholder={busy && !isGenerating ? "上一条任务生成中，请稍候…" : "描述你想要的应用，例如：一个支持分类统计的记账本，带月度饼图"}
               maxLength={2000}
-              disabled={isGenerating}
+              disabled={locked}
               className="hero-textarea"
             />
             <div className="hero-foot">
-              <span className="hero-hint">Enter 发送 · Shift+Enter 换行</span>
-              <button type="submit" disabled={isGenerating || !draft.trim()} aria-label="发送" className="hero-send">
+              <span className="hero-hint">{locked ? "任务生成中，完成后可继续" : "Enter 发送 · Shift+Enter 换行"}</span>
+              <button type="submit" disabled={locked || !draft.trim()} aria-label="发送" className="hero-send">
                 <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 19V5" /><path d="m5 12 7-7 7 7" /></svg>
               </button>
             </div>
@@ -368,7 +369,8 @@
       );
     }
 
-    function PromptPanel({ draft, setDraft, onGenerate, isGenerating, history, onSelect, onDelete, currentId, historyError }) {
+    function PromptPanel({ draft, setDraft, onGenerate, isGenerating, busy, history, onSelect, onDelete, currentId, historyError }) {
+      const locked = isGenerating || busy;
       return (
         <aside className="prompt-pane flex flex-col">
           <div className="pane-head flex items-center px-5">
@@ -380,14 +382,14 @@
               id="prompt"
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              placeholder="描述你想要的应用，例如：做一个扫雷游戏，支持难度选择和重新开始"
+              placeholder={busy && !isGenerating ? "上一条任务生成中，请稍候…" : "描述你想要的应用，例如：做一个扫雷游戏，支持难度选择和重新开始"}
               className="ws-textarea h-[140px]"
               maxLength={2000}
-              disabled={isGenerating}
+              disabled={locked}
             />
-            <button type="submit" disabled={isGenerating || !draft.trim()} className="generate-btn mt-3 flex h-10 w-full items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50">
-              {isGenerating && <span className="spinner !h-4 !w-4 !border-white/35 !border-t-white" />}
-              {isGenerating ? "生成中..." : "生成"}
+            <button type="submit" disabled={locked || !draft.trim()} className="generate-btn mt-3 flex h-10 w-full items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50">
+              {(isGenerating || busy) && <span className="spinner !h-4 !w-4 !border-white/35 !border-t-white" />}
+              {isGenerating ? "生成中..." : busy ? "生成中，请稍候" : "生成"}
             </button>
           </form>
           <div className="flex min-h-0 flex-1 flex-col">
@@ -607,6 +609,13 @@
       useEffect(() => { refreshHistory(); }, []);
       useEffect(() => { if (currentView === "history") refreshHistory(); }, [currentView]);
       useEffect(() => () => { operationRef.current += 1; }, []);
+      // 有任务生成中时，每 5 秒刷新历史，让 pending 状态自动流转
+      const hasPendingRecord = history.some((record) => record.status === "pending");
+      useEffect(() => {
+        if (!hasPendingRecord) return undefined;
+        const timer = setInterval(refreshHistory, 5000);
+        return () => clearInterval(timer);
+      }, [hasPendingRecord]);
 
       async function pollGeneration(id, operation) {
         for (let attempt = 0; attempt < 30; attempt += 1) {
@@ -637,6 +646,12 @@
 
       async function submitGeneration(prompt, parentId = null) {
         if (!prompt?.trim() || isGenerating) return;
+        // 并发守卫：已有任务生成中（含刷新页面后仍未完成的）时拒绝新请求，避免 429
+        if (history.some((record) => record.status === "pending")) {
+          setCurrentView("workspace");
+          showToast("上一条任务还在生成中，请等它完成后再试");
+          return;
+        }
         const operation = ++operationRef.current;
         setIsGenerating(true);
         setDisplayError("");
@@ -742,10 +757,10 @@
             )}
           </header>
           {currentView === "landing" ? (
-            <Landing draft={draft} setDraft={setDraft} onGenerate={submitGeneration} isGenerating={isGenerating} onEnterWorkspace={() => setCurrentView("workspace")} />
+            <Landing draft={draft} setDraft={setDraft} onGenerate={submitGeneration} isGenerating={isGenerating} busy={hasPendingRecord} onEnterWorkspace={() => setCurrentView("workspace")} />
           ) : currentView === "workspace" ? (
             <main className="workspace flex h-[calc(100vh-56px)] text-[#ededed]">
-              <PromptPanel draft={draft} setDraft={setDraft} onGenerate={submitGeneration} isGenerating={isGenerating} history={history} onSelect={selectGeneration} onDelete={deleteRecord} currentId={currentGeneration?.id} historyError={historyError} />
+              <PromptPanel draft={draft} setDraft={setDraft} onGenerate={submitGeneration} isGenerating={isGenerating} busy={hasPendingRecord} history={history} onSelect={selectGeneration} onDelete={deleteRecord} currentId={currentGeneration?.id} historyError={historyError} />
               <PreviewPanel generation={currentGeneration} isGenerating={isGenerating} onModify={() => setModifyOpen(true)} onRetry={retryGeneration} displayError={displayError} />
               <CodePanel generation={currentGeneration} />
             </main>
