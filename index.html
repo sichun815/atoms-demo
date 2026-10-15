@@ -42,12 +42,19 @@
     .app-shell > header { position: relative; }
     .app-shell > header::after { content: ""; position: absolute; bottom: -1px; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(139, 92, 246, .3), transparent); pointer-events: none; }
     .app-shell > header svg[viewBox="0 0 32 32"] { border-radius: 7px; background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%); }
-    .app-shell { height: 100vh; min-height: 540px; display: flex; flex-direction: column; background: var(--bg); color: var(--text); }
-    .workspace { width: 100%; height: calc(100vh - 56px); min-height: 0; display: flex; background: var(--bg); }
-    .prompt-pane { width: 320px; flex: 0 0 320px; min-width: 0; border-right: 1px solid var(--border); background: var(--panel); display: flex; flex-direction: column; }
-    .preview-pane { width: 0; min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: var(--bg); }
-    .code-pane { width: 360px; flex: 0 0 360px; min-width: 0; background: var(--panel); display: flex; flex-direction: column; }
-    .pane-head { height: 56px; flex: 0 0 56px; border-bottom: 1px solid var(--border); background: rgba(20, 20, 20, .96); }
+    .app-shell {
+      height: 100vh; min-height: 540px; display: flex; flex-direction: column; color: var(--text);
+      background:
+        radial-gradient(ellipse 70% 46% at 50% -6%, rgba(124, 92, 250, .14), transparent 62%),
+        radial-gradient(ellipse 50% 40% at 6% 108%, rgba(124, 92, 250, .07), transparent 70%),
+        radial-gradient(ellipse 50% 40% at 94% 108%, rgba(124, 92, 250, .07), transparent 70%),
+        var(--bg);
+    }
+    .workspace { width: 100%; height: calc(100vh - 56px); min-height: 0; display: flex; background: transparent; }
+    .prompt-pane { width: 320px; flex: 0 0 320px; min-width: 0; border-right: 1px solid rgba(139, 92, 246, .16); background: linear-gradient(180deg, rgba(23, 20, 34, .55), rgba(16, 15, 22, .78)); display: flex; flex-direction: column; }
+    .preview-pane { width: 0; min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; border-right: 1px solid rgba(139, 92, 246, .16); background: transparent; }
+    .code-pane { width: 360px; flex: 0 0 360px; min-width: 0; background: linear-gradient(180deg, rgba(23, 20, 34, .55), rgba(16, 15, 22, .78)); display: flex; flex-direction: column; }
+    .pane-head { height: 56px; flex: 0 0 56px; border-bottom: 1px solid rgba(139, 92, 246, .14); background: rgba(18, 16, 28, .55); }
     .preview-surface {
       min-height: 0;
       flex: 1;
@@ -55,11 +62,11 @@
       display: flex;
       overflow: auto;
       background:
-        radial-gradient(circle at 1px 1px, rgba(255,255,255,.08) 1px, transparent 0) 0 0 / 18px 18px,
-        radial-gradient(circle at 50% 0%, rgba(139,92,246,.10), transparent 38%),
-        var(--bg);
+        radial-gradient(circle at 1px 1px, rgba(167, 139, 250, .14) 1px, transparent 0) 0 0 / 18px 18px,
+        radial-gradient(circle at 50% 0%, rgba(139, 92, 246, .14), transparent 40%),
+        transparent;
     }
-    .preview-frame { width: 100%; height: 100%; border: 1px solid var(--border); border-radius: 6px; background: #fff; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+    .preview-frame { width: 100%; height: 100%; border: 1px solid rgba(139, 92, 246, .22); border-radius: 14px; background: #fff; box-shadow: 0 20px 60px rgba(0, 0, 0, .4), 0 0 40px rgba(124, 92, 250, .1); }
     .code-scroll { min-height: 0; flex: 1; overflow: auto; }
     .code-scroll pre { width: max-content; min-width: 100%; tab-size: 2; }
     .thin-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -193,6 +200,54 @@
       transition: background-color 150ms;
     }
     .btn-primary-pill:hover { background: #6d4ef0; }
+    /* ---- Workspace（与落地页统一的设计语言） ---- */
+    .ws-label { display: flex; align-items: center; gap: 8px; font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12px; color: #a78bfa; }
+    .ws-textarea {
+      width: 100%;
+      border: 1px solid rgba(139, 92, 246, .22);
+      border-radius: 12px;
+      background: rgba(20, 18, 30, .6);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .02);
+      resize: none;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.8;
+      color: var(--text);
+      transition: border-color 150ms, box-shadow 150ms;
+    }
+    .ws-textarea::placeholder { color: var(--placeholder); }
+    .ws-textarea:focus { border-color: rgba(139, 92, 246, .6); box-shadow: 0 0 0 2px rgba(139, 92, 246, .16), 0 0 30px rgba(124, 92, 250, .12); }
+    .generate-btn {
+      border: 0;
+      border-radius: 12px;
+      background: linear-gradient(92deg, #8b5cf6 0%, #7c5cfa 100%);
+      box-shadow: 0 8px 26px rgba(124, 92, 250, .3);
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      transition: filter 150ms, transform 150ms, box-shadow 150ms;
+    }
+    .generate-btn:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 10px 32px rgba(124, 92, 250, .42); }
+    .ws-item { border: 1px solid transparent; border-radius: 12px; transition: border-color 150ms, background-color 150ms; }
+    .ws-item:hover { background: rgba(139, 92, 246, .07); }
+    .ws-item.active { border-color: rgba(139, 92, 246, .5); background: rgba(139, 92, 246, .1); }
+    .pill-nav { display: flex; align-items: center; gap: 4px; border: 1px solid rgba(139, 92, 246, .3); border-radius: 999px; background: rgba(139, 92, 246, .08); padding: 4px; }
+    .pill-nav button { border-radius: 999px; padding: 6px 16px; font-size: 13px; color: var(--muted); transition: background-color 150ms, color 150ms, box-shadow 150ms; }
+    .pill-nav button:hover { color: var(--text); background: rgba(139, 92, 246, .12); }
+    .pill-nav button.active { background: linear-gradient(92deg, #8b5cf6, #7c5cfa); color: #fff; box-shadow: 0 4px 14px rgba(124, 92, 250, .35); }
+    .ws-card {
+      border: 1px solid rgba(139, 92, 246, .28);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(23, 20, 34, .92), rgba(16, 15, 22, .96));
+      box-shadow: 0 18px 50px rgba(0, 0, 0, .45), 0 0 42px rgba(124, 92, 250, .1);
+    }
+    .ws-empty {
+      border: 1px solid rgba(139, 92, 246, .18);
+      border-radius: 14px;
+      background: rgba(16, 15, 22, .72);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .03);
+    }
     @media (max-width: 880px) {
       .app-shell { min-height: 100vh; height: auto; }
       .workspace { display: block; }
@@ -315,36 +370,36 @@
 
     function PromptPanel({ draft, setDraft, onGenerate, isGenerating, history, onSelect, onDelete, currentId, historyError }) {
       return (
-        <aside className="prompt-pane flex flex-col border-r border-[#262626]">
+        <aside className="prompt-pane flex flex-col">
           <div className="pane-head flex items-center px-5">
-            <h2 className="text-sm font-semibold text-[#ededed]">创建应用</h2>
+            <span className="ws-label"><span aria-hidden="true">&gt;</span><span>创建应用</span></span>
           </div>
-          <form className="border-b border-[#262626] p-5" onSubmit={(event) => { event.preventDefault(); onGenerate(draft); }}>
-            <label htmlFor="prompt" className="mb-3 block text-xs font-medium text-[#a1a1a1]">需求描述</label>
+          <form className="border-b border-[rgba(139,92,246,0.14)] p-4" onSubmit={(event) => { event.preventDefault(); onGenerate(draft); }}>
+            <label htmlFor="prompt" className="ws-label mb-3"><span aria-hidden="true">&gt;</span><span>需求描述</span></label>
             <textarea
               id="prompt"
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               placeholder="描述你想要的应用，例如：做一个扫雷游戏，支持难度选择和重新开始"
-              className="h-[140px] w-full resize-none rounded-md border border-[#2a2a2a] bg-[#1a1a1a] p-3 text-sm leading-6 text-[#ededed] placeholder:text-[#525252] focus:border-[#8b5cf6] focus:ring-2 focus:ring-[#8b5cf6]"
+              className="ws-textarea h-[140px]"
               maxLength={2000}
               disabled={isGenerating}
             />
-            <button type="submit" disabled={isGenerating || !draft.trim()} className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#8b5cf6] px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-[#7c3aed] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#8b5cf6]">
+            <button type="submit" disabled={isGenerating || !draft.trim()} className="generate-btn mt-3 flex h-10 w-full items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50">
               {isGenerating && <span className="spinner !h-4 !w-4 !border-white/35 !border-t-white" />}
               {isGenerating ? "生成中..." : "生成"}
             </button>
           </form>
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="flex items-center justify-between px-5 pb-3 pt-5">
-              <h2 className="title-chip text-xs font-semibold uppercase text-[#6b6b6b]">最近生成</h2>
+              <h2 className="title-chip text-xs font-semibold uppercase tracking-wider text-[#6b6b6b]">最近生成</h2>
               <span className="text-xs text-[#6b6b6b]">{Math.min(history.length, 5)} / 5</span>
             </div>
             <div className="thin-scroll min-h-0 flex-1 overflow-y-auto px-3 pb-4">
               {historyError && <p className="px-2 py-3 text-xs text-[#ef4444]">{historyError}</p>}
               {!historyError && history.length === 0 && <p className="px-2 py-3 text-sm text-[#a1a1a1]">暂无记录</p>}
               {history.slice(0, 5).map((item) => (
-                <div key={item.id} className={`group mb-1 flex items-stretch rounded-md border transition-colors duration-150 hover:bg-[#1a1a1a] ${currentId === item.id ? "border-[#8b5cf6]/60 bg-[#8b5cf6]/10" : "border-transparent"}`}>
+                <div key={item.id} className={`ws-item group mb-1 flex items-stretch ${currentId === item.id ? "active" : ""}`}>
                   <button type="button" onClick={() => onSelect(item.id)} className="min-w-0 flex-1 px-3 py-3 text-left">
                     <span className="block truncate text-sm text-[#ededed]">{item.prompt.slice(0, 40)}</span>
                     <span className="mt-2 flex items-center justify-between gap-2 text-xs text-[#a1a1a1]">
@@ -386,11 +441,11 @@
       const title = generation?.prompt?.trim().slice(0, 20) || "生成的应用";
 
       return (
-        <section className="preview-pane flex min-w-0 flex-col border-r border-[#262626]" aria-label="应用预览">
+        <section className="preview-pane flex min-w-0 flex-col" aria-label="应用预览">
           <div className="pane-head flex items-center justify-between gap-3 px-4">
             <div className="min-w-0">
-              <p className="text-[11px] font-medium text-[#6b6b6b]">预览</p>
-              <h2 className="truncate text-sm font-semibold text-[#ededed]" title={generation?.prompt || title}>{title}</h2>
+              <p className="ws-label"><span aria-hidden="true">&gt;</span><span>预览</span></p>
+              <h2 className="truncate text-sm font-semibold text-[#f5f4ff]" title={generation?.prompt || title}>{title}</h2>
             </div>
             <div className="flex shrink-0 items-center gap-1">
               <IconButton title="修改需求" onClick={onModify} disabled={!ready}>
@@ -408,36 +463,26 @@
             {ready && !pending ? (
               <iframe key={`${generation.id}-${reloadKey}`} title="生成的应用" sandbox="allow-scripts allow-forms allow-modals allow-popups" srcDoc={generation.html} className="preview-frame w-full h-full bg-white" />
             ) : (
-              <div className="flex min-h-full w-full items-center justify-center rounded-md border border-[#262626] bg-[#0a0a0a]/80 p-6 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.03)]">
+              <div className="ws-empty flex min-h-full w-full items-center justify-center p-6 text-center">
                 {pending ? (
-                  <div className="flex flex-col items-center gap-4"><span className="spinner" /><p className="text-sm text-[#ededed]">AI 正在生成...</p></div>
+                  <div className="flex flex-col items-center gap-4"><span className="spinner" /><p className="text-sm text-[#f5f4ff]">AI 正在生成...</p></div>
                 ) : displayError || generation?.status === "failed" ? (
                   <div className="max-w-md">
                     <h3 className="text-sm font-semibold text-[#ef4444]">生成失败</h3>
                     <p className="mt-2 break-words text-sm leading-6 text-[#a1a1a1]">{displayError || generation.error || "未知错误"}</p>
-                    {generation?.id && <button type="button" onClick={onRetry} className="mt-5 rounded-md border border-[#262626] px-4 py-2 text-sm text-[#ededed] transition-colors duration-150 hover:bg-[#1a1a1a]">重试</button>}
+                    {generation?.id && <button type="button" onClick={onRetry} className="mt-5 rounded-lg border border-[rgba(139,92,246,0.3)] px-4 py-2 text-sm text-[#ededed] transition-colors duration-150 hover:bg-[rgba(139,92,246,0.1)]">重试</button>}
                   </div>
                 ) : (
-                  <div className="max-w-sm text-[#a1a1a1]">
-                    <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-md border border-[#262626] bg-[#141414]" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" className="h-6 w-6 text-[#8b5cf6]" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m14 4 6 6" />
-                        <path d="m5 19 9.5-9.5" />
-                        <path d="m12.5 5.5 6 6" />
-                        <path d="M5 5v4" />
-                        <path d="M3 7h4" />
-                        <path d="M19 15v3" />
-                        <path d="M17.5 16.5h3" />
-                      </svg>
-                    </div>
-                    <p className="text-base font-medium text-[#ededed]">在左侧输入你的需求，点击生成</p>
+                  <div className="max-w-sm">
+                    <span className="hero-badge">等待你的灵感</span>
+                    <p className="mt-5 text-base font-medium text-[#f5f4ff]">在左侧输入你的需求，点击生成</p>
                     <p className="mt-2 text-[13px] leading-5 text-[#a1a1a1]">生成的网页应用会在这里实时预览</p>
                   </div>
                 )}
               </div>
             )}
           </div>
-          <div className="flex min-h-9 flex-wrap items-center gap-x-4 gap-y-1 border-t border-[#262626] px-4 py-2 text-[11px] text-[#a1a1a1]">
+          <div className="flex min-h-9 flex-wrap items-center gap-x-4 gap-y-1 border-t border-[rgba(139,92,246,0.14)] px-4 py-2 text-[11px] text-[#a1a1a1]">
             <span>创建于 {fullTime(generation?.created_at)}</span>
             <span>模型 {generation?.model || MODEL_NAME}</span>
             {generation?.usage && <span>Token {generation.usage.total_tokens ?? ((generation.usage.input_tokens || 0) + (generation.usage.output_tokens || 0))}</span>}
@@ -463,35 +508,39 @@
         <aside className="code-pane flex flex-col" aria-label="生成代码">
           <div className="pane-head flex items-center justify-between px-4">
             <div>
-              <h2 className="text-sm font-semibold text-[#ededed]">代码</h2>
+              <p className="ws-label"><span aria-hidden="true">&gt;</span><span>代码</span></p>
               <p className="code-font text-[11px] text-[#a1a1a1]">index.html</p>
             </div>
-            <button type="button" onClick={copyCode} disabled={!generation?.html} className="inline-flex items-center gap-2 rounded-md border border-[#262626] px-3 py-1.5 text-xs text-[#a1a1a1] transition-colors duration-150 hover:bg-[#1a1a1a] hover:text-[#ededed] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent">
+            <button type="button" onClick={copyCode} disabled={!generation?.html} className="inline-flex items-center gap-2 rounded-lg border border-[rgba(139,92,246,0.3)] px-3 py-1.5 text-xs text-[#c4b5fd] transition-colors duration-150 hover:bg-[rgba(139,92,246,0.12)] hover:text-[#f5f4ff] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent">
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></svg>
               {copied ? "已复制" : "复制"}
             </button>
           </div>
-          <div className="code-scroll thin-scroll bg-[#0d0d0d]">
+          <div className="code-scroll thin-scroll bg-transparent">
             {generation?.html ? <pre className="code-font p-4 text-xs leading-5 text-[#a1a1a1]"><code>{generation.html}</code></pre> : <div className="flex h-full min-h-[220px] items-center justify-center p-6 text-center text-sm text-[#a1a1a1]">生成的 HTML 代码会显示在这里</div>}
           </div>
-          <div className="border-t border-[#262626] px-4 py-2 text-[11px] text-[#a1a1a1]">{generation?.html ? `${generation.html.length.toLocaleString()} 字符` : "HTML"}</div>
+          <div className="border-t border-[rgba(139,92,246,0.14)] px-4 py-2 text-[11px] text-[#a1a1a1]">{generation?.html ? `${generation.html.length.toLocaleString()} 字符` : "HTML"}</div>
         </aside>
       );
     }
 
     function History({ history, onSelect, onDelete, error, onRefresh }) {
       return (
-        <main className="thin-scroll min-h-0 flex-1 overflow-y-auto bg-[#0a0a0a]">
+        <main className="thin-scroll min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto max-w-5xl px-6 py-8">
             <div className="mb-6 flex items-center justify-between gap-3">
-              <div><h1 className="text-xl font-semibold text-[#ededed]">历史记录</h1><p className="mt-1 text-xs text-[#a1a1a1]">{history.length} 条记录</p></div>
-              <button type="button" onClick={onRefresh} className="rounded-md border border-[#262626] px-3 py-2 text-xs text-[#a1a1a1] transition-colors duration-150 hover:bg-[#1a1a1a] hover:text-[#ededed]">刷新</button>
+              <div>
+                <span className="hero-badge">生成历史</span>
+                <h1 className="mt-4 text-xl font-semibold text-[#f5f4ff]">历史记录</h1>
+                <p className="mt-1 text-xs text-[#a1a1a1]">{history.length} 条记录</p>
+              </div>
+              <button type="button" onClick={onRefresh} className="rounded-lg border border-[rgba(139,92,246,0.3)] px-3 py-2 text-xs text-[#c4b5fd] transition-colors duration-150 hover:bg-[rgba(139,92,246,0.12)] hover:text-[#f5f4ff]">刷新</button>
             </div>
             {error && <p className="mb-4 text-sm text-[#ef4444]">{error}</p>}
-            {!error && history.length === 0 && <p className="border-t border-[#262626] py-8 text-sm text-[#a1a1a1]">暂无生成记录</p>}
-            <div className="overflow-hidden rounded-md border border-[#262626] bg-[#141414]">
+            {!error && history.length === 0 && <p className="ws-card px-6 py-10 text-center text-sm text-[#a1a1a1]">暂无生成记录</p>}
+            <div className="ws-card overflow-hidden">
               {history.map((item) => (
-                <div key={item.id} className="group flex items-start gap-3 border-b border-[#262626] last:border-b-0 hover:bg-[#1a1a1a]">
+                <div key={item.id} className="group flex items-start gap-3 border-b border-[rgba(139,92,246,0.12)] transition-colors duration-150 last:border-b-0 hover:bg-[rgba(139,92,246,0.07)]">
                   <button type="button" onClick={() => onSelect(item.id)} className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-4 px-4 py-5 text-left transition-colors duration-150">
                     <span className="min-w-0 flex-1 whitespace-pre-wrap break-words text-sm leading-6 text-[#ededed]">{item.prompt}</span>
                     <span className="flex shrink-0 items-center gap-4"><time className="text-xs text-[#a1a1a1]">{fullTime(item.created_at)}</time><StatusBadge status={item.status} /></span>
@@ -516,17 +565,17 @@
       }, [onClose, isGenerating]);
       return (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget && !isGenerating) onClose(); }}>
-          <form role="dialog" aria-modal="true" aria-labelledby="modify-title" onSubmit={(event) => { event.preventDefault(); if (text.trim()) onSubmit(text.trim()); }} className="w-full max-w-lg rounded-md border border-[#262626] bg-[#141414] p-5 shadow-2xl">
+          <form role="dialog" aria-modal="true" aria-labelledby="modify-title" onSubmit={(event) => { event.preventDefault(); if (text.trim()) onSubmit(text.trim()); }} className="ws-card w-full max-w-lg p-5">
             <div className="flex items-center justify-between gap-3">
-              <h2 id="modify-title" className="text-base font-semibold text-[#ededed]">修改需求</h2>
-              <button type="button" onClick={onClose} disabled={isGenerating} aria-label="关闭" className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#a1a1a1] transition-colors duration-150 hover:bg-[#262626] hover:text-[#ededed]">
+              <h2 id="modify-title" className="ws-label"><span aria-hidden="true">&gt;</span><span>修改需求</span></h2>
+              <button type="button" onClick={onClose} disabled={isGenerating} aria-label="关闭" className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#a1a1a1] transition-colors duration-150 hover:bg-[rgba(139,92,246,0.12)] hover:text-[#ededed]">
                 <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
               </button>
             </div>
-            <textarea autoFocus value={text} onChange={(event) => setText(event.target.value)} maxLength={2000} placeholder="例如：把扫雷的格子调大一点" className="mt-4 h-[140px] w-full resize-none rounded-md border border-[#2a2a2a] bg-[#1a1a1a] p-3 text-sm leading-6 text-[#ededed] placeholder:text-[#525252] focus:border-[#8b5cf6] focus:ring-2 focus:ring-[#8b5cf6]" />
+            <textarea autoFocus value={text} onChange={(event) => setText(event.target.value)} maxLength={2000} placeholder="例如：把扫雷的格子调大一点" className="ws-textarea mt-4 h-[140px]" />
             <div className="mt-4 flex justify-end gap-2">
-              <button type="button" onClick={onClose} disabled={isGenerating} className="rounded-md px-4 py-2 text-sm text-[#a1a1a1] transition-colors duration-150 hover:bg-[#262626] hover:text-[#ededed]">取消</button>
-              <button type="submit" disabled={!text.trim() || isGenerating} className="rounded-md bg-[#8b5cf6] px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#7c3aed] disabled:cursor-not-allowed disabled:opacity-50">生成新版本</button>
+              <button type="button" onClick={onClose} disabled={isGenerating} className="rounded-lg px-4 py-2 text-sm text-[#a1a1a1] transition-colors duration-150 hover:bg-[rgba(139,92,246,0.12)] hover:text-[#ededed]">取消</button>
+              <button type="submit" disabled={!text.trim() || isGenerating} className="generate-btn">生成新版本</button>
             </div>
           </form>
         </div>
@@ -686,16 +735,16 @@
                 登录开始创作
               </button>
             ) : (
-              <nav className="flex items-center gap-1 rounded-full border border-[#262626] bg-[#141414] p-1" aria-label="主导航">
-                <button type="button" onClick={() => setCurrentView("workspace")} className={`rounded-full px-3 py-1.5 text-sm transition-colors duration-150 ${currentView === "workspace" ? "bg-[#262626] text-[#ededed]" : "text-[#a1a1a1] hover:bg-[#1a1a1a] hover:text-[#ededed]"}`}>Workspace</button>
-                <button type="button" onClick={() => setCurrentView("history")} className={`rounded-full px-3 py-1.5 text-sm transition-colors duration-150 ${currentView === "history" ? "bg-[#262626] text-[#ededed]" : "text-[#a1a1a1] hover:bg-[#1a1a1a] hover:text-[#ededed]"}`}>History</button>
+              <nav className="pill-nav" aria-label="主导航">
+                <button type="button" onClick={() => setCurrentView("workspace")} className={currentView === "workspace" ? "active" : ""}>Workspace</button>
+                <button type="button" onClick={() => setCurrentView("history")} className={currentView === "history" ? "active" : ""}>History</button>
               </nav>
             )}
           </header>
           {currentView === "landing" ? (
             <Landing draft={draft} setDraft={setDraft} onGenerate={submitGeneration} isGenerating={isGenerating} onEnterWorkspace={() => setCurrentView("workspace")} />
           ) : currentView === "workspace" ? (
-            <main className="workspace flex h-[calc(100vh-56px)] bg-[#0a0a0a] text-[#ededed]">
+            <main className="workspace flex h-[calc(100vh-56px)] text-[#ededed]">
               <PromptPanel draft={draft} setDraft={setDraft} onGenerate={submitGeneration} isGenerating={isGenerating} history={history} onSelect={selectGeneration} onDelete={deleteRecord} currentId={currentGeneration?.id} historyError={historyError} />
               <PreviewPanel generation={currentGeneration} isGenerating={isGenerating} onModify={() => setModifyOpen(true)} onRetry={retryGeneration} displayError={displayError} />
               <CodePanel generation={currentGeneration} />
