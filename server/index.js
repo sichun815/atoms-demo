@@ -7,6 +7,7 @@ import {
   createGeneration,
   deleteGeneration,
   getGeneration,
+  initDb,
   listGenerations,
   resetGenerationForRetry,
   updateGenerationFailed,
@@ -216,3 +217,10 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server listening on port ${PORT}`);
 });
+
+initDb()
+  .then(() => console.log("Database schema ready"))
+  .catch((error) => {
+    console.error("Database init failed:", error.message);
+    process.exit(1);
+  });
