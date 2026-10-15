@@ -10,6 +10,23 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
+const INIT_SQL = `
+CREATE TABLE IF NOT EXISTS generations (
+  id UUID PRIMARY KEY,
+  prompt TEXT NOT NULL,
+  html TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  error TEXT,
+  parent_id UUID,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at TIMESTAMPTZ
+);
+`;
+
+export async function initDb() {
+  await pool.query(INIT_SQL);
+}
+
 const columns = "id, prompt, html, status, error, parent_id, created_at, completed_at";
 
 export async function createGeneration({ id, prompt, parentId = null }) {
