@@ -5,10 +5,15 @@ if (!process.env.DATABASE_URL) {
 }
 
 const { Pool } = pg;
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
+
+function createPool(useSsl) {
+  return new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: useSsl ? { rejectUnauthorized: false } : false,
+  });
+}
+
+let pool = createPool(true);
 
 const INIT_SQL = `
 CREATE TABLE IF NOT EXISTS generations (
@@ -24,6 +29,16 @@ CREATE TABLE IF NOT EXISTS generations (
 `;
 
 export async function initDb() {
+  try {
+    await pool.query("SELECT 1");
+  } catch (err) {
+    if (/SSL/i.test(err.message || "")) {
+      pool = createPool(false);
+      await pool.query("SELECT 1");
+    } else {
+      throw err;
+    }
+  }
   await pool.query(INIT_SQL);
 }
 
