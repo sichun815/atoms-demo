@@ -37,6 +37,12 @@ Game-specific requirements:
 - Handle mouse events carefully and call preventDefault when appropriate.
 - Provide a clear start/restart mechanism.
 
+Board / grid game requirements (2048, Minesweeper, Chess, Sudoku, etc.):
+- Keep a single source of truth for the board state and re-render the whole board from it; never mutate DOM state and data state separately.
+- Any state-changing action (move, merge, reveal, undo, redo, restart, pause) must update every related piece of state consistently: board contents, score, history stack, game-over flags, and button enabled/disabled states.
+- Undo/redo must restore the exact previous state, including score and board, and must be reflected immediately in the UI.
+- After implementing undo/redo, verify internally: moving, undoing, and undoing again must reproduce the earlier boards exactly.
+
 Live-state applications:
 - For any application with real-time state (games, countdown timers, animations, live data displays, etc.), include a pause/resume button by default, even if the user does not request one.
 - While paused, timers and animations must stop and gameplay or other state-changing mouse and keyboard input must be ignored. The resume button must remain usable.
@@ -58,13 +64,20 @@ Code quality:
 - Make the UI visually polished. Dark or light themes are both acceptable, but the theme must be consistent.
 - Provide clear visual feedback such as hover, active, loading, selected, success, or error states where relevant.
 
+Mobile / responsive requirements:
+- The generated app must be usable on a 360px-wide screen with no horizontal scrolling.
+- Use flexible layouts (flex/grid, flex-wrap, min-width: 0, max-width: 100%).
+- Touch targets should be at least 40px tall.
+- Do not give main containers a fixed pixel width larger than 320px; prefer percentage or max-width.
+- For grids/boards, size cells relative to the viewport (vmin, min(), clamp()) so squares stay square and nothing is cropped.
+
 Do not:
 - Do not reference external images, fonts, CSS frameworks, or JavaScript libraries.
 - Do not generate applications that require a backend API.
 - Do not generate applications that require login or an account system.
 - Do not output anything outside the HTML document.
 
-If an existing HTML document is supplied, modify it to satisfy the new request while preserving working behavior. Always return the entire updated document, not a patch.`;
+If an existing HTML document is supplied, modify it to satisfy the new request while preserving working behavior. Apply the requested change precisely, keep every existing feature working, keep all state synchronized, and always return the entire updated document, not a patch.`;
 
 function extractHtml(text) {
   const codeBlock = text.match(/```html\s*([\s\S]*?)```/i);
