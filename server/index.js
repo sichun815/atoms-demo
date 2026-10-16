@@ -13,6 +13,14 @@ import {
   updateGenerationFailed,
   updateGenerationSuccess,
 } from "./db.js";
+import {
+  currentUser,
+  login,
+  logout,
+  readSessionToken,
+  register,
+  sessionCookie,
+} from "./auth.js";
 import { generateHtml } from "./llm.js";
 import { validateHtml } from "./validate.js";
 
@@ -23,12 +31,14 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Credentials": "true",
 };
 
-function sendJson(res, statusCode, data) {
+function sendJson(res, statusCode, data, extraHeaders = {}) {
   res.writeHead(statusCode, {
     "Content-Type": "application/json",
     ...CORS_HEADERS,
+    ...extraHeaders,
   });
   res.end(JSON.stringify(data));
 }
@@ -99,11 +109,18 @@ function startGeneration(id, prompt, originalHtml = null) {
   });
 }
 
-async function getParentHtml(parentId) {
+async function getOwnedGeneration(id, userId) {
+  const generation = await getGeneration(id);
+  if (!generation) return null;
+  if ((generation.user_id ?? null) !== (userId ?? null)) return null;
+  return generation;
+}
+
+async function getParentHtml(parentId, userId) {
   if (typeof parentId !== "string" || !parentId) {
     throw Object.assign(new Error("parentId must be a valid ID"), { statusCode: 400 });
   }
-  const parent = await getGeneration(parentId);
+  const parent = await getOwnedGeneration(parentId, userId);
   if (!parent) {
     throw Object.assign(new Error("Parent generation not found"), { statusCode: 404 });
   }
@@ -111,6 +128,13 @@ async function getParentHtml(parentId) {
     throw Object.assign(new Error("Parent generation must be successful"), { statusCode: 409 });
   }
   return parent.html;
+}
+
+function requireUser(user) {
+  if (!user) {
+    throw Object.assign(new Error("请先登录"), { statusCode: 401 });
+  }
+  return user;
 }
 
 const server = http.createServer(async (req, res) => {
@@ -135,7 +159,42 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    /* ---------------- auth ---------------- */
+
+    if (req.method === "POST" && pathname === "/api/auth/register") {
+      const body = await readBody(req);
+      const { user, token } = await register({
+        email: body?.email,
+        username: body?.username,
+        password: body?.password,
+      });
+      sendJson(res, 201, { user }, { "Set-Cookie": sessionCookie(token) });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/auth/login") {
+      const body = await readBody(req);
+      const { user, token } = await login({ email: body?.email, password: body?.password });
+      sendJson(res, 200, { user }, { "Set-Cookie": sessionCookie(token) });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/auth/logout") {
+      await logout(readSessionToken(req));
+      sendJson(res, 200, { success: true }, { "Set-Cookie": sessionCookie("", { clear: true }) });
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/auth/me") {
+      const user = await currentUser(req);
+      sendJson(res, 200, { user: user ?? null });
+      return;
+    }
+
+    /* ---------------- generations ---------------- */
+
     if (req.method === "POST" && pathname === "/api/generations") {
+      const user = requireUser(await currentUser(req));
       const body = await readBody(req);
       const prompt = body?.prompt;
       if (typeof prompt !== "string" || !prompt.trim()) {
@@ -144,22 +203,25 @@ const server = http.createServer(async (req, res) => {
       }
 
       const parentId = body.parentId ?? null;
-      const originalHtml = parentId === null ? null : await getParentHtml(parentId);
+      const originalHtml = parentId === null ? null : await getParentHtml(parentId, user.id);
       const id = randomUUID();
-      await createGeneration({ id, prompt: prompt.trim(), parentId });
+      await createGeneration({ id, prompt: prompt.trim(), parentId, userId: user.id });
       sendJson(res, 202, { id, status: "pending" });
       startGeneration(id, prompt.trim(), originalHtml);
       return;
     }
 
     if (req.method === "GET" && pathname === "/api/generations") {
-      sendJson(res, 200, await listGenerations());
+      const user = requireUser(await currentUser(req));
+      sendJson(res, 200, await listGenerations({ userId: user.id }));
       return;
     }
 
     if (parts[0] === "api" && parts[1] === "generations" && parts.length === 3) {
+      const user = requireUser(await currentUser(req));
+
       if (req.method === "GET") {
-        const generation = await getGeneration(parts[2]);
+        const generation = await getOwnedGeneration(parts[2], user.id);
         if (!generation) {
           sendJson(res, 404, { error: "not found" });
           return;
@@ -169,7 +231,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (req.method === "DELETE") {
-        const deleted = await deleteGeneration(parts[2]);
+        const deleted = await deleteGeneration(parts[2], user.id);
         if (!deleted) {
           sendJson(res, 404, { error: "not found" });
           return;
@@ -186,7 +248,8 @@ const server = http.createServer(async (req, res) => {
       parts.length === 4 &&
       parts[3] === "retry"
     ) {
-      const generation = await getGeneration(parts[2]);
+      const user = requireUser(await currentUser(req));
+      const generation = await getOwnedGeneration(parts[2], user.id);
       if (!generation) {
         sendJson(res, 404, { error: "not found" });
         return;
@@ -197,7 +260,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       const originalHtml = generation.parent_id
-        ? await getParentHtml(generation.parent_id)
+        ? await getParentHtml(generation.parent_id, user.id)
         : null;
       await resetGenerationForRetry(generation.id);
       sendJson(res, 202, { id: generation.id, status: "pending" });
