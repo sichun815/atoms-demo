@@ -181,6 +181,87 @@
     }
     .hero-start:hover:not(:disabled) { background: #2456d6; transform: translateY(-1px); }
     .hero-start:disabled { opacity: .5; cursor: not-allowed; }
+    /* ---- Auth page（浅色，与官网风落地页统一） ---- */
+    .auth-page {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 88px 24px 56px;
+      background: #fff;
+      color: #111;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      border: 1px solid #e7e7e5;
+      border-radius: 22px;
+      background: #fff;
+      box-shadow: 0 16px 48px rgba(0,0,0,.10);
+      padding: 28px 26px 24px;
+    }
+    .auth-title { margin: 16px 0 0; font-size: 24px; font-weight: 800; letter-spacing: .01em; color: #111; }
+    .auth-sub { margin: 8px 0 0; font-size: 13px; line-height: 1.7; color: #6b6b68; }
+    .auth-field { margin-top: 16px; }
+    .auth-label { display: block; margin-bottom: 7px; font-size: 12px; font-weight: 600; color: #3f3f3d; }
+    .auth-input {
+      width: 100%;
+      border: 1px solid #e2e2e0;
+      border-radius: 12px;
+      background: #fbfbfa;
+      padding: 11px 14px;
+      font-size: 14px;
+      color: #111;
+      outline: none;
+      transition: border-color 150ms, box-shadow 150ms, background-color 150ms;
+    }
+    .auth-input::placeholder { color: #a8a8a5; }
+    .auth-input:focus { border-color: #2f6bff; background: #fff; box-shadow: 0 0 0 3px rgba(47,107,255,.14); }
+    .auth-submit {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; margin-top: 22px;
+      border: 0; border-radius: 999px;
+      background: #2f6bff; color: #fff;
+      padding: 12px 18px; font-size: 14px; font-weight: 600;
+      transition: background-color 150ms, transform 150ms;
+    }
+    .auth-submit:hover:not(:disabled) { background: #2456d6; transform: translateY(-1px); }
+    .auth-submit:disabled { opacity: .55; cursor: not-allowed; }
+    .auth-error {
+      margin-top: 16px;
+      border: 1px solid rgba(239,68,68,.28);
+      border-radius: 12px;
+      background: rgba(239,68,68,.07);
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #b91c1c;
+    }
+    .auth-switch { margin: 18px 0 0; text-align: center; font-size: 13px; color: #6b6b68; }
+    .auth-link { border: 0; background: transparent; padding: 0; font-size: 13px; font-weight: 600; color: #2f6bff; text-decoration: underline; }
+    .auth-link:hover { color: #2456d6; }
+    .auth-back { margin: 14px 0 0; text-align: center; font-size: 12px; }
+    .auth-back button { border: 0; background: transparent; color: #8b8b88; font-size: 12px; }
+    .auth-back button:hover { color: #111; }
+    .auth-tips { margin: 18px 0 0; border-top: 1px solid #f0f0ee; padding-top: 14px; font-size: 12px; line-height: 1.9; color: #8b8b88; }
+    .user-chip { display: flex; align-items: center; gap: 10px; }
+    .user-avatar {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 999px;
+      background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+      font-size: 12px; font-weight: 700; color: #fff;
+    }
+    .user-name { font-size: 13px; font-weight: 600; color: #f5f4ff; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .logout-btn {
+      border: 1px solid rgba(139, 92, 246, .3); border-radius: 999px;
+      background: rgba(139, 92, 246, .08); color: #c4b5fd;
+      padding: 6px 14px; font-size: 12px;
+      transition: background-color 150ms, color 150ms;
+    }
+    .logout-btn:hover { background: rgba(139, 92, 246, .18); color: #f5f4ff; }
     .hero-badge {
       display: inline-flex;
       align-items: center;
@@ -297,14 +378,52 @@
       background: rgba(16, 15, 22, .72);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, .03);
     }
+    /* ---- 响应式：平板 ---- */
+    @media (max-width: 1180px) {
+      .prompt-pane { width: 280px; flex: 0 0 280px; }
+      .code-pane { width: 300px; flex: 0 0 300px; }
+    }
+    /* ---- 响应式：手机（纵向堆叠，三块内容各自完整可见） ---- */
     @media (max-width: 880px) {
       .app-shell { min-height: 100vh; height: auto; }
-      .workspace { display: block; }
-      .prompt-pane, .code-pane { width: 100%; border-left: 0; border-right: 0; }
-      .prompt-pane { border-bottom: 1px solid var(--border); }
-      .preview-pane { width: 100%; height: min(75vh, 680px); min-height: 420px; }
-      .code-pane { height: 360px; border-top: 1px solid var(--border); }
-      .preview-surface { padding: 10px; }
+      .workspace { display: flex; flex-direction: column; height: auto; min-height: 0; }
+      .prompt-pane, .code-pane { width: 100%; flex: 0 0 auto; border-left: 0; border-right: 0; }
+      .prompt-pane { border-bottom: 1px solid rgba(139, 92, 246, .16); }
+      .preview-pane {
+        width: 100%; flex: 0 0 auto;
+        height: auto; min-height: 0;
+        border-right: 0;
+        border-bottom: 1px solid rgba(139, 92, 246, .16);
+      }
+      .preview-surface {
+        padding: 10px;
+        overflow: visible;
+        height: 70vh;
+        min-height: 380px;
+      }
+      .preview-frame { height: 100%; }
+      .code-pane { height: auto; }
+      .code-scroll { max-height: 46vh; }
+      .pane-head { height: 52px; flex: 0 0 52px; }
+      /* 顶栏在窄屏换行排布，避免挤压 */
+      .app-shell > header { height: auto; min-height: 56px; flex-wrap: wrap; gap: 8px; padding-top: 8px; padding-bottom: 8px; }
+      .user-name { max-width: 88px; }
+      /* 落地页：手机端隐藏漂浮卡片与菜单，保证标题与输入框完整 */
+      .float-card, .lt-menu { display: none; }
+      .landing { padding: 84px 18px 56px; }
+      .hero-title { font-size: clamp(30px, 9vw, 40px); }
+      .hero-sub { font-size: 13px; }
+      .hero-card { max-width: 100%; border-radius: 18px; padding: 14px 16px 12px; }
+      .made-by { right: 12px; bottom: 12px; padding: 7px 12px; font-size: 12px; }
+      .auth-page { padding: 78px 16px 48px; }
+      .auth-card { padding: 22px 18px 20px; border-radius: 18px; }
+      .auth-title { font-size: 21px; }
+    }
+    @media (max-width: 520px) {
+      .preview-surface { height: 62vh; min-height: 320px; }
+      .user-name { display: none; }
+      .pill-nav button { padding: 5px 12px; font-size: 12px; }
+      .logout-btn { padding: 5px 11px; font-size: 11px; }
     }
   </style>
 </head>
@@ -321,6 +440,7 @@
       let response;
       try {
         response = await fetch(`${API_BASE}${path}`, {
+          credentials: "include",
           ...options,
           headers: { "Content-Type": "application/json", ...options.headers },
         });
@@ -369,7 +489,129 @@
       );
     }
 
-    function Landing({ draft, setDraft, onGenerate, isGenerating, busy, onEnterWorkspace }) {
+    function AuthPage({ mode, setMode, onAuthed, onBack }) {
+      const isRegister = mode === "register";
+      const [email, setEmail] = useState("");
+      const [username, setUsername] = useState("");
+      const [password, setPassword] = useState("");
+      const [error, setError] = useState("");
+      const [busy, setBusy] = useState(false);
+
+      async function submit() {
+        if (busy) return;
+        setError("");
+        if (!email.trim() || !password) { setError("请填写邮箱和密码"); return; }
+        if (isRegister && !username.trim()) { setError("请填写用户名"); return; }
+        if (isRegister && password.length < 6) { setError("密码至少需要 6 位"); return; }
+        setBusy(true);
+        try {
+          const path = isRegister ? "/api/auth/register" : "/api/auth/login";
+          const body = isRegister
+            ? { email: email.trim(), username: username.trim(), password }
+            : { email: email.trim(), password };
+          const data = await api(path, { method: "POST", body: JSON.stringify(body) });
+          onAuthed(data.user);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      return (
+        <main className="auth-page">
+          <div className="lt-nav">
+            <span className="lt-logo">
+              <svg viewBox="0 0 32 32" className="h-6 w-6" aria-hidden="true">
+                <rect x="1" y="1" width="30" height="30" rx="8" fill="#7c5cfa" />
+                <path d="M10.2 22 15 10h2l4.8 12h-2.1l-1.1-3h-5.2l-1.1 3h-2.1Zm4-4.8h3.7L16 12.2l-1.8 5Z" fill="#fff" />
+              </svg>
+              <span>Atoms</span>
+            </span>
+            <button type="button" className="lt-login" onClick={onBack}>返回首页</button>
+          </div>
+          <form
+            className="auth-card"
+            onSubmit={(event) => { event.preventDefault(); submit(); }}
+          >
+            <span className="hero-badge">Workspace 账号</span>
+            <h1 className="auth-title">{isRegister ? "创建账号" : "登录 Atoms"}</h1>
+            <p className="auth-sub">
+              {isRegister
+                ? "注册后即可开始生成应用，作品会自动保存到你的账号。"
+                : "登录后继续创作，之前的作品和历史都在你的账号里。"}
+            </p>
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="auth-email">邮箱</label>
+              <input
+                id="auth-email"
+                type="email"
+                className="auth-input"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                disabled={busy}
+              />
+            </div>
+
+            {isRegister && (
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="auth-username">用户名</label>
+                <input
+                  id="auth-username"
+                  type="text"
+                  className="auth-input"
+                  autoComplete="nickname"
+                  placeholder="用于显示的名字"
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  disabled={busy}
+                />
+              </div>
+            )}
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="auth-password">密码</label>
+              <input
+                id="auth-password"
+                type="password"
+                className="auth-input"
+                autoComplete={isRegister ? "new-password" : "current-password"}
+                placeholder={isRegister ? "至少 6 位" : "请输入密码"}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                disabled={busy}
+              />
+            </div>
+
+            {error && <p className="auth-error">{error}</p>}
+
+            <button type="submit" className="auth-submit" disabled={busy}>
+              {busy && <span className="spinner !h-4 !w-4 !border-white/35 !border-t-white" />}
+              {busy ? "请稍候..." : isRegister ? "注册并进入" : "登录"}
+            </button>
+
+            <p className="auth-switch">
+              {isRegister ? "已有账号？" : "还没有账号？"}
+              <button
+                type="button"
+                className="auth-link"
+                onClick={() => { setError(""); setMode(isRegister ? "login" : "register"); }}
+              >
+                {isRegister ? "去登录" : "去注册"}
+              </button>
+            </p>
+            <div className="auth-tips">
+              测试账号：demo@atoms.dev / atoms123（可直接登录体验；也可以自行注册新账号）
+            </div>
+          </form>
+        </main>
+      );
+    }
+
+    function Landing({ draft, setDraft, onGenerate, isGenerating, busy, onEnterWorkspace, user }) {
       const locked = isGenerating || busy;
       function submit() {
         if (draft.trim() && !locked) onGenerate(draft);
@@ -398,7 +640,16 @@
               <button type="button">关于</button>
               <button type="button">定价</button>
             </nav>
-            <button type="button" className="lt-login" onClick={onEnterWorkspace}>登录开始创作</button>
+            <div className="flex items-center gap-2">
+              {user ? (
+                <button type="button" className="lt-login" onClick={onEnterWorkspace}>{user.username || "进入工作台"}</button>
+              ) : (
+                <>
+                  <button type="button" className="lt-login" onClick={onEnterWorkspace}>登录</button>
+                  <button type="button" className="hero-start" onClick={onEnterWorkspace}>开始创作</button>
+                </>
+              )}
+            </div>
           </div>
           {shots.map((shot) => (
             <div key={shot.label} className="float-card" style={shot.style} aria-hidden="true">
@@ -659,6 +910,9 @@
 
     function App() {
       const [currentView, setCurrentView] = useState("landing");
+      const [authView, setAuthView] = useState("login");
+      const [user, setUser] = useState(null);
+      const [authReady, setAuthReady] = useState(false);
       const [currentGeneration, setCurrentGeneration] = useState(null);
       const [isGenerating, setIsGenerating] = useState(false);
       const [history, setHistory] = useState([]);
@@ -679,8 +933,26 @@
         }
       }
 
-      useEffect(() => { refreshHistory(); }, []);
-      useEffect(() => { if (currentView === "history") refreshHistory(); }, [currentView]);
+      // 启动时确认登录态：有会话则直接进入工作台，并载入该账号的作品
+      useEffect(() => {
+        (async () => {
+          try {
+            const data = await api("/api/auth/me");
+            if (data?.user) {
+              setUser(data.user);
+              setCurrentView("workspace");
+              refreshHistory();
+            }
+          } catch {
+            /* 未登录或后端不可用，停在落地页 */
+          } finally {
+            setAuthReady(true);
+          }
+        })();
+      }, []);
+
+      useEffect(() => { if (user) refreshHistory(); }, [user]);
+      useEffect(() => { if (currentView === "history" && user) refreshHistory(); }, [currentView, user]);
       useEffect(() => () => { operationRef.current += 1; }, []);
       // 有任务生成中时，每 5 秒刷新历史，让 pending 状态自动流转
       const hasPendingRecord = history.some((record) => record.status === "pending");
@@ -690,15 +962,50 @@
         return () => clearInterval(timer);
       }, [hasPendingRecord]);
 
+      function handleAuthed(nextUser) {
+        setUser(nextUser);
+        setCurrentView("workspace");
+        setDisplayError("");
+        refreshHistory();
+      }
+
+      async function handleLogout() {
+        try {
+          await api("/api/auth/logout", { method: "POST" });
+        } catch {
+          /* 即使请求失败也清空本地状态 */
+        }
+        operationRef.current += 1;
+        setUser(null);
+        setHistory([]);
+        setCurrentGeneration(null);
+        setIsGenerating(false);
+        setDisplayError("");
+        setDraft("");
+        setModifyOpen(false);
+        setCurrentView("landing");
+        setAuthView("login");
+      }
+
+      // 未登录时拦截需要账号的操作
+      function requireLogin() {
+        setCurrentView("landing");
+        setAuthView("login");
+        setDisplayError("");
+        showToast("请先登录后再创作");
+      }
+
       async function pollGeneration(id, operation) {
-        for (let attempt = 0; attempt < 30; attempt += 1) {
+        for (let attempt = 0; attempt < 60; attempt += 1) {
           if (operationRef.current !== operation) return;
           try {
             const record = await api(`/api/generations/${encodeURIComponent(id)}`);
             if (operationRef.current !== operation) return;
             setCurrentGeneration(record);
             if (record.status !== "pending") {
+              // 生成/修改完成后：强制刷新当前预览到最新结果
               setIsGenerating(false);
+              setDisplayError(record.status === "failed" ? record.error || "生成失败" : "");
               refreshHistory();
               return;
             }
@@ -719,6 +1026,7 @@
 
       async function submitGeneration(prompt, parentId = null) {
         if (!prompt?.trim() || isGenerating) return;
+        if (!user) { requireLogin(); return; }
         // 并发守卫：已有任务生成中（含刷新页面后仍未完成的）时拒绝新请求，避免 429
         if (history.some((record) => record.status === "pending")) {
           setCurrentView("workspace");
@@ -736,17 +1044,20 @@
             body: JSON.stringify({ prompt: prompt.trim(), ...(parentId ? { parentId } : {}) }),
           });
           if (operationRef.current !== operation) return;
+          // 立刻把预览切到这条新记录（含追加修改产生的新版本）
           setCurrentGeneration({ id: data.id, prompt: prompt.trim(), html: null, status: "pending", error: null, created_at: new Date().toISOString(), parent_id: parentId });
           refreshHistory();
           pollGeneration(data.id, operation);
         } catch (error) {
           if (operationRef.current !== operation) return;
+          if (/401|请先登录/.test(error.message)) { requireLogin(); return; }
           setDisplayError(error.message);
           setIsGenerating(false);
         }
       }
 
       async function selectGeneration(id) {
+        if (!user) { requireLogin(); return; }
         const operation = ++operationRef.current;
         setCurrentView("workspace");
         setDisplayError("");
@@ -769,6 +1080,7 @@
 
       async function retryGeneration() {
         if (!currentGeneration?.id || isGenerating) return;
+        if (!user) { requireLogin(); return; }
         const id = currentGeneration.id;
         const operation = ++operationRef.current;
         setDisplayError("");
@@ -807,9 +1119,11 @@
         }
       }
 
+      const showWorkspaceChrome = Boolean(user) && currentView !== "landing" && currentView !== "auth";
+
       return (
         <div className="app-shell">
-          {currentView !== "landing" && (
+          {showWorkspaceChrome && (
           <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#262626] bg-[#0a0a0a] px-4 sm:px-6">
             <div className="flex items-center gap-3">
               <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0" aria-hidden="true">
@@ -818,22 +1132,44 @@
               </svg>
               <div className="text-sm font-bold leading-4 text-[#f5f4ff]">Atoms Demo</div>
             </div>
-            <nav className="pill-nav" aria-label="主导航">
-              <button type="button" onClick={() => setCurrentView("workspace")} className={currentView === "workspace" ? "active" : ""}>Workspace</button>
-              <button type="button" onClick={() => setCurrentView("history")} className={currentView === "history" ? "active" : ""}>History</button>
-            </nav>
+            <div className="flex items-center gap-3">
+              <nav className="pill-nav" aria-label="主导航">
+                <button type="button" onClick={() => setCurrentView("workspace")} className={currentView === "workspace" ? "active" : ""}>Workspace</button>
+                <button type="button" onClick={() => setCurrentView("history")} className={currentView === "history" ? "active" : ""}>History</button>
+              </nav>
+              <div className="user-chip">
+                <span className="user-avatar" aria-hidden="true">{(user.username || user.email || "U").trim().charAt(0).toUpperCase()}</span>
+                <span className="user-name" title={user.email}>{user.username || user.email}</span>
+                <button type="button" className="logout-btn" onClick={handleLogout}>退出</button>
+              </div>
+            </div>
           </header>
           )}
-          {currentView === "landing" ? (
-            <Landing draft={draft} setDraft={setDraft} onGenerate={submitGeneration} isGenerating={isGenerating} busy={hasPendingRecord} onEnterWorkspace={() => setCurrentView("workspace")} />
+          {currentView === "auth" ? (
+            <AuthPage mode={authView} setMode={setAuthView} onAuthed={handleAuthed} onBack={() => setCurrentView("landing")} />
+          ) : currentView === "landing" ? (
+            <Landing
+              draft={draft}
+              setDraft={setDraft}
+              onGenerate={submitGeneration}
+              isGenerating={isGenerating}
+              busy={hasPendingRecord}
+              user={user}
+              onEnterWorkspace={() => {
+                if (!user) { setAuthView("login"); setCurrentView("auth"); return; }
+                setCurrentView("workspace");
+              }}
+            />
+          ) : !user ? (
+            <AuthPage mode={authView} setMode={setAuthView} onAuthed={handleAuthed} onBack={() => setCurrentView("landing")} />
           ) : currentView === "workspace" ? (
-            <main className="workspace flex h-[calc(100vh-56px)] text-[#ededed]">
+            <main className="workspace flex text-[#ededed]">
               <PromptPanel draft={draft} setDraft={setDraft} onGenerate={submitGeneration} isGenerating={isGenerating} busy={hasPendingRecord} history={history} onSelect={selectGeneration} onDelete={deleteRecord} currentId={currentGeneration?.id} historyError={historyError} />
               <PreviewPanel generation={currentGeneration} isGenerating={isGenerating} onModify={() => setModifyOpen(true)} onRetry={retryGeneration} displayError={displayError} />
               <CodePanel generation={currentGeneration} />
             </main>
           ) : <History history={history} onSelect={selectGeneration} onDelete={deleteRecord} error={historyError} onRefresh={refreshHistory} />}
-          {modifyOpen && <ModifyDialog onClose={() => setModifyOpen(false)} onSubmit={(text) => submitGeneration(text, currentGeneration.id)} isGenerating={isGenerating} />}
+          {modifyOpen && currentGeneration?.id && <ModifyDialog onClose={() => setModifyOpen(false)} onSubmit={(text) => submitGeneration(text, currentGeneration.id)} isGenerating={isGenerating} />}
           {toast && <div className="fixed bottom-4 right-4 z-40 max-w-sm rounded-md border border-[#ef4444]/40 bg-[#141414] px-4 py-3 text-sm text-[#ef4444] shadow-2xl">{toast}</div>}
         </div>
       );
