@@ -96,8 +96,8 @@ function startGeneration(id, prompt, originalHtml = null) {
   setImmediate(async () => {
     try {
       const { html } = await generateHtml(prompt, originalHtml);
-      validateHtml(html);
-      await updateGenerationSuccess(id, html);
+      const { html: finalHtml } = validateHtml(html);
+      await updateGenerationSuccess(id, finalHtml);
     } catch (error) {
       console.error(`Generation ${id} failed:`, error);
       try {
