@@ -42,6 +42,14 @@ Board / grid game requirements (2048, Minesweeper, Chess, Sudoku, etc.):
 - Any state-changing action (move, merge, reveal, undo, redo, restart, pause) must update every related piece of state consistently: board contents, score, history stack, game-over flags, and button enabled/disabled states.
 - Undo/redo must restore the exact previous state, including score and board, and must be reflected immediately in the UI.
 - After implementing undo/redo, verify internally: moving, undoing, and undoing again must reproduce the earlier boards exactly.
+- CRITICAL snapshot ordering rule: the history snapshot must capture the state BEFORE the move mutates anything. Mutating the score inside slide/merge helpers (e.g. score += merged inside slideRowLeft) and calling saveState() afterwards makes undo restore the wrong score. Required pattern:
+    function moveLeft() {
+      const snapshot = { board: board.map(r => [...r]), score: score };
+      // ... compute merged result into a NEW board, without touching global score ...
+      const gained = <merge gain computed locally>;
+      if (moved) { board = newBoard; score += gained; history.push(snapshot); }
+    }
+  In other words: never rely on a global score that helper functions have already mutated when pushing the history entry.
 
 Live-state applications:
 - For any application with real-time state (games, countdown timers, animations, live data displays, etc.), include a pause/resume button by default, even if the user does not request one.
